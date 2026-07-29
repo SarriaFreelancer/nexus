@@ -106,6 +106,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
       setTasks(previousTasks);
       alert("Error al marcar tarea: " + res.error);
     } else {
+      fetchEvents(); // Refetch timeline to show the new event
       onSuccess(false); // Refresh parent without closing modal
     }
   };
@@ -113,7 +114,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === "PRODUCTION" || t.status === "MAINTENANCE").length;
   const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const translateProjectStatus = (st: string) => st === "DEVELOPMENT" ? "En Desarrollo" : st === "DESIGN" ? "En Diseño" : st === "TESTING" ? "En Pruebas" : st === "DEPLOYED" ? "En Producción" : st === "ARCHIVED" ? "Finalizado" : st === "DISCOVERY" ? "Descubrimiento" : st;
+  const translateProjectStatus = (st: string) => st === "DEVELOPMENT" ? "En Desarrollo" : st === "DESIGN" ? "En Diseño" : st === "TESTING" ? "En Pruebas" : st === "DEPLOYED" ? "En Producción" : st === "COMPLETED" ? "Completado" : st === "ARCHIVED" ? "Finalizado" : st === "DISCOVERY" ? "Descubrimiento" : st === "PAUSED" ? "En Pausa" : st === "MAINTENANCE" ? "Mantenimiento" : st;
   const projectPhase = translateProjectStatus(project.status);
 
   const filteredEvents = events.filter((evt) => {
@@ -176,6 +177,9 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                     <option value="DEVELOPMENT">En Desarrollo</option>
                     <option value="TESTING">En Pruebas</option>
                     <option value="DEPLOYED">En Producción</option>
+                    <option value="MAINTENANCE">Mantenimiento</option>
+                    <option value="PAUSED">En Pausa</option>
+                    <option value="COMPLETED">Completado</option>
                     <option value="ARCHIVED">Finalizado</option>
                   </select>
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500"></div>

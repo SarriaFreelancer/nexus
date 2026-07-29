@@ -153,15 +153,15 @@ export default function ProyectosPage() {
         {/* Bottom Header: Filters and Toggles */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mt-4">
           {/* Left: Status Filters */}
-          <div className="flex flex-wrap items-center gap-2">
-            {["Todos", "En Desarrollo", "En Diseño", "En Pruebas", "En Pausa", "Completados"].map((st) => (
+          <div className="flex overflow-x-auto pb-2 gap-2 flex-nowrap custom-scrollbar shrink-0 w-full xl:w-auto">
+            {["Todos", "Descubrimiento", "En Diseño", "En Desarrollo", "En Pruebas", "En Producción", "Mantenimiento", "En Pausa", "Completado", "Finalizado"].map((st) => (
               <button
                 key={st}
                 onClick={() => setSelectedStatus(st === "Todos" ? "TODOS" : st)}
-                className={`px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${
+                className={`px-4 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all ${
                   (selectedStatus === "TODOS" && st === "Todos") || selectedStatus === st
-                    ? "bg-indigo-600 text-white"
-                    : "bg-[#161b2c] border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-600"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                    : "bg-slate-100 dark:bg-[#161b2c] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600"
                 }`}
               >
                 {st}

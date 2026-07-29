@@ -199,7 +199,7 @@ export async function addSubtask(taskId: string, title: string) {
 
 export async function toggleSubtask(subtaskId: string, completed: boolean) {
   try {
-    const { workspace, role } = await getCurrentWorkspace();
+    const { workspace, role, user } = await getCurrentWorkspace();
     if (!hasPermission(role, "DEVELOPER")) throw new Error("UNAUTHORIZED_ROLE");
 
     const subtask = await prisma.subtask.findUnique({
@@ -212,7 +212,35 @@ export async function toggleSubtask(subtaskId: string, completed: boolean) {
       where: { id: subtaskId },
       data: { completed },
     });
+    
+    // Check if all subtasks are completed
+    if (completed) {
+      const allSubtasks = await prisma.subtask.findMany({
+        where: { taskId: subtask.taskId }
+      });
+      
+      const allCompleted = allSubtasks.every(st => st.completed);
+      if (allCompleted) {
+        await prisma.task.update({
+          where: { id: subtask.taskId },
+          data: { 
+            status: "PRODUCTION",
+            endDate: new Date()
+          }
+        });
+        
+        await recordProjectEvent(
+          subtask.task.projectId,
+          (user as any).id,
+          "TASK_STATUS",
+          `Tarea completada automáticamente al finalizar sus subtareas: ${subtask.task.title}`,
+          { taskId: subtask.taskId, automated: true }
+        );
+      }
+    }
+
     revalidatePath("/tareas");
+    revalidatePath("/proyectos");
     return { success: true, data: updated };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -292,7 +320,8 @@ export async function toggleTaskCompletion(taskId: string, isCompleted: boolean)
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: {
-        status: newStatus
+        status: newStatus,
+        endDate: isCompleted ? new Date() : null
       }
     });
 

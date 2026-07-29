@@ -10,6 +10,7 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
   const [error, setError] = useState("");
   const [projects, setProjects] = useState<any[]>([]);
   const [subtasks, setSubtasks] = useState<any[]>(task.subtasks || []);
+  const [status, setStatus] = useState(task.status);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [autoDeploy, setAutoDeploy] = useState(false);
@@ -71,7 +72,15 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
   const handleToggleSubtask = async (subtaskId: string, currentCompleted: boolean) => {
     const nextState = !currentCompleted;
     // Optimistic UI update
-    setSubtasks((prev) => prev.map((st) => (st.id === subtaskId ? { ...st, completed: nextState } : st)));
+    const newSubtasks = subtasks.map((st) => (st.id === subtaskId ? { ...st, completed: nextState } : st));
+    setSubtasks(newSubtasks);
+    
+    // Check if all subtasks are completed now
+    const allCompleted = newSubtasks.length > 0 && newSubtasks.every(st => st.completed);
+    if (allCompleted) {
+      setStatus("PRODUCTION");
+    }
+    
     await toggleSubtask(subtaskId, nextState);
   };
 
@@ -125,7 +134,8 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
           <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Estado</label>
           <select
             name="status"
-            defaultValue={task.status}
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
             className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
           >
             <option value="BACKLOG">Backlog</option>

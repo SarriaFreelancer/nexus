@@ -25,9 +25,10 @@ export function translateProjectStatus(status: string): string {
     "TESTING": "En Pruebas",
     "DEPLOYMENT": "En Despliegue",
     "DEPLOYED": "En Producción",
-    "COMPLETED": "Finalizado",
+    "COMPLETED": "Completado",
     "ARCHIVED": "Finalizado",
-    "ON_HOLD": "Pausado",
+    "PAUSED": "En Pausa",
+    "MAINTENANCE": "Mantenimiento",
     "CANCELLED": "Cancelado"
   };
   return statusMap[status] || status;
