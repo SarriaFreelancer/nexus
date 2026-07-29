@@ -1,0 +1,234 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum GlobalRole {
+  SUPER_ADMIN
+  USER
+}
+
+enum WorkspaceRole {
+  ADMIN
+  MANAGER
+  DEVELOPER
+  DESIGNER
+  QA
+  COMMERCIAL
+  CLIENT
+  GUEST
+}
+
+enum ProjectStatus {
+  DISCOVERY
+  DESIGN
+  DEVELOPMENT
+  TESTING
+  DEPLOYED
+  MAINTENANCE
+  PAUSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  IDEAS
+  BACKLOG
+  TODO
+  IN_ANALYSIS
+  IN_DESIGN
+  IN_DEVELOPMENT
+  IN_TESTING
+  DEPLOYING
+  PRODUCTION
+  MAINTENANCE
+  ARCHIVED
+}
+
+model User {
+  id            String            @id @default(uuid())
+  email         String            @unique
+  name          String
+  avatarUrl     String?
+  globalRole    GlobalRole        @default(USER)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  memberships   WorkspaceMember[]
+  tasksAssigned Task[]            @relation("TaskAssignee")
+  timeEntries   TimeEntry[]
+  auditLogs     AuditLog[]
+}
+
+model Workspace {
+  id          String            @id @default(uuid())
+  name        String
+  slug        String            @unique
+  logoUrl     String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  members     WorkspaceMember[]
+  clients     Client[]
+  projects    Project[]
+  servers     ServerInstance[]
+  financials  FinancialRecord[]
+}
+
+model WorkspaceMember {
+  id          String        @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(DEVELOPER)
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+}
+
+model Client {
+  id          String    @id @default(uuid())
+  workspaceId String
+  company     String
+  contactName String
+  email       String
+  phone       String?
+  stage       String    @default("LEAD")
+  projects    Project[]
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}
+
+model Project {
+  id             String           @id @default(uuid())
+  workspaceId    String
+  clientId       String?
+  name           String
+  code           String
+  description    String?          @db.Text
+  status         ProjectStatus    @default(DISCOVERY)
+  priority       Priority         @default(MEDIUM)
+  category       String
+  technologies   Json
+  gitRepoUrl     String?
+  serverDomain   String?
+  estimatedHours Float?
+  actualHours    Float            @default(0)
+  startDate      DateTime?
+  endDate        DateTime?
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client         Client?          @relation(fields: [clientId], references: [id])
+  versions       ProjectVersion[]
+  tasks          Task[]
+  docs           Document[]
+  servers        ServerInstance[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model ProjectVersion {
+  id          String   @id @default(uuid())
+  projectId   String
+  version     String
+  title       String
+  changelog   String   @db.Text
+  releaseDate DateTime
+  isCurrent   Boolean  @default(false)
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+}
+
+model Task {
+  id          String          @id @default(uuid())
+  projectId   String
+  versionId   String?
+  title       String
+  description String?         @db.Text
+  status      TaskStatus      @default(BACKLOG)
+  priority    Priority        @default(MEDIUM)
+  assigneeId  String?
+  estimatedHs Float?
+  loggedHs     Float           @default(0)
+  dueDate     DateTime?
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  version     ProjectVersion? @relation(fields: [versionId], references: [id])
+  assignee    User?           @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  subtasks    Subtask[]
+  timeEntries TimeEntry[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Subtask {
+  id        String   @id @default(uuid())
+  taskId    String
+  title     String
+  completed Boolean  @default(false)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model TimeEntry {
+  id        String   @id @default(uuid())
+  taskId    String
+  userId    String
+  hours     Float
+  note      String?
+  date      DateTime @default(now())
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  projectId String
+  title     String
+  content   String   @db.LongText
+  category  String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ServerInstance {
+  id          String    @id @default(uuid())
+  workspaceId String
+  projectId   String?
+  name        String
+  ipAddress   String
+  provider    String
+  cpuUsage    Float     @default(0)
+  ramUsage    Float     @default(0)
+  diskUsage   Float     @default(0)
+  status      String    @default("ONLINE")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project     Project?  @relation(fields: [projectId], references: [id])
+  updatedAt   DateTime  @updatedAt
+}
+
+model FinancialRecord {
+  id          String    @id @default(uuid())
+  workspaceId String
+  type        String
+  amount      Float
+  category    String
+  description String?
+  date        DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  details   Json?
+  timestamp DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
