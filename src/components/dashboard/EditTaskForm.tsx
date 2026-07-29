@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { updateTask, addSubtask, toggleSubtask, deleteSubtask } from "@/core/application/actions/taskActions";
+import { updateTask, addSubtask, toggleSubtask, deleteSubtask, addTaskAttachment, removeTaskAttachment } from "@/core/application/actions/taskActions";
 import { getProjects } from "@/core/application/actions/projectActions";
-import { Loader2, Plus, Trash2, CheckCircle2, Circle, Zap, Calendar, FolderKanban, AlertCircle } from "lucide-react";
+import { Loader2, Plus, Trash2, CheckCircle2, Circle, Zap, Calendar, FolderKanban, Paperclip, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
 
 export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSuccess: () => void; onCancel: () => void }) {
   const [loading, setLoading] = useState(false);
@@ -14,6 +14,10 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [autoDeploy, setAutoDeploy] = useState(false);
+  const [attachments, setAttachments] = useState<any[]>(task.attachments || []);
+  const [newAttachmentName, setNewAttachmentName] = useState("");
+  const [newAttachmentUrl, setNewAttachmentUrl] = useState("");
+  const [addingAttachment, setAddingAttachment] = useState(false);
 
   useEffect(() => {
     getProjects().then((res) => {
@@ -35,6 +39,7 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
       priority: formData.get("priority") as string,
       estimatedHs: Number(formData.get("estimatedHs")),
       dueDate: formData.get("dueDate") ? new Date(formData.get("dueDate") as string) : null,
+      coverUrl: formData.get("coverUrl") as string,
     };
 
     try {
@@ -87,6 +92,30 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
   const handleDeleteSubtask = async (subtaskId: string) => {
     setSubtasks((prev) => prev.filter((st) => st.id !== subtaskId));
     await deleteSubtask(subtaskId);
+  };
+
+  const handleAddAttachment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAttachmentName.trim() || !newAttachmentUrl.trim()) return;
+
+    setAddingAttachment(true);
+    try {
+      const res = await addTaskAttachment(task.id, newAttachmentName.trim(), newAttachmentUrl.trim());
+      if (res.success && res.data) {
+        setAttachments((prev) => [...prev, res.data]);
+        setNewAttachmentName("");
+        setNewAttachmentUrl("");
+      }
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setAddingAttachment(false);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+    await removeTaskAttachment(attachmentId);
   };
 
   const formattedDueDate = task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "";
@@ -185,6 +214,20 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
             className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
           />
         </div>
+
+        {/* Cover Image */}
+        <div className="space-y-1.5 md:col-span-2">
+          <label className="text-slate-700 dark:text-slate-300 font-medium text-xs flex items-center gap-1.5">
+            <ImageIcon className="w-3.5 h-3.5 text-indigo-400" /> Foto de Portada (URL)
+          </label>
+          <input
+            name="coverUrl"
+            type="url"
+            placeholder="https://..."
+            defaultValue={task.coverUrl || ""}
+            className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+          />
+        </div>
       </div>
 
       {/* Description */}
@@ -260,6 +303,76 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
                   type="button"
                   onClick={() => handleDeleteSubtask(st.id)}
                   className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Attachments Section */}
+      <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
+        <div className="flex items-center justify-between">
+          <label className="text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5">
+            <Paperclip className="w-4 h-4 text-indigo-400" /> Archivos Adjuntos ({attachments.length})
+          </label>
+        </div>
+
+        {/* Add Attachment inputs */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            value={newAttachmentName}
+            onChange={(e) => setNewAttachmentName(e.target.value)}
+            placeholder="Nombre (ej. Diseño Figma)"
+            className="w-full sm:w-1/3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+          />
+          <input
+            type="url"
+            value={newAttachmentUrl}
+            onChange={(e) => setNewAttachmentUrl(e.target.value)}
+            placeholder="URL del archivo..."
+            className="flex-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAddAttachment(e);
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={handleAddAttachment}
+            disabled={addingAttachment || !newAttachmentName.trim() || !newAttachmentUrl.trim()}
+            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-1 shrink-0"
+          >
+            {addingAttachment ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+            Añadir
+          </button>
+        </div>
+
+        {/* Attachments List */}
+        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+          {attachments.length === 0 ? (
+            <p className="text-xs text-slate-500 dark:text-slate-400 italic">No hay archivos adjuntos.</p>
+          ) : (
+            attachments.map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center justify-between p-2 rounded-lg bg-slate-100/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/60 text-xs"
+              >
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <LinkIcon className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                  <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-slate-700 dark:text-slate-200 hover:text-indigo-500 dark:hover:text-indigo-400 truncate font-medium hover:underline">
+                    {a.name}
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteAttachment(a.id)}
+                  className="p-1 text-slate-400 hover:text-rose-400 transition-colors shrink-0 ml-2"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

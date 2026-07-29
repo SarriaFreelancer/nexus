@@ -194,13 +194,24 @@ model Task {
   loggedHs     Float           @default(0)
   dueDate     DateTime?
   endDate     DateTime?
+  coverUrl    String?         @db.Text
   project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   version     ProjectVersion? @relation(fields: [versionId], references: [id])
   assignee    User?           @relation("TaskAssignee", fields: [assigneeId], references: [id])
   subtasks    Subtask[]
+  attachments TaskAttachment[]
   timeEntries TimeEntry[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+}
+
+model TaskAttachment {
+  id        String   @id @default(uuid())
+  taskId    String
+  name      String
+  url       String   @db.Text
+  createdAt DateTime @default(now())
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model Subtask {

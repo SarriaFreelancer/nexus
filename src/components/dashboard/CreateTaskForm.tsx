@@ -74,9 +74,9 @@ export function CreateTaskForm({ onSuccess, onCancel }: { onSuccess: () => void,
         </div>
         <div className="space-y-1.5">
           <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Prioridad</label>
-          <select name="priority" className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none">
+          <select name="priority" defaultValue="MEDIUM" className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none">
             <option value="LOW">Baja</option>
-            <option value="MEDIUM" selected>Media</option>
+            <option value="MEDIUM">Media</option>
             <option value="HIGH">Alta</option>
             <option value="URGENT">Urgente</option>
           </select>

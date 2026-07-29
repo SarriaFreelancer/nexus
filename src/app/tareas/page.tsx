@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { CheckSquare, Plus, Search, Filter, MoreHorizontal, User as UserIcon, Calendar, CheckCircle2, Loader2, GripVertical, Edit3 } from "lucide-react";
 import { getAllTasks, moveTaskStatus } from "@/core/application/actions/taskActions";
+import { getProjects } from "@/core/application/actions/projectActions";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { CreateTaskForm } from "@/components/dashboard/CreateTaskForm";
@@ -54,6 +55,8 @@ export default function TareasPage() {
   ];
 
   const [tasks, setTasks] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTask, setEditTask] = useState<any | null>(null);
@@ -66,7 +69,7 @@ export default function TareasPage() {
 
   const fetchTasks = () => {
     setIsLoading(true);
-    getAllTasks().then((res) => {
+    getAllTasks(selectedProjectId || undefined).then((res) => {
       if (res.success && res.data) {
         setTasks(res.data);
       }
@@ -75,8 +78,14 @@ export default function TareasPage() {
   };
 
   useEffect(() => {
-    fetchTasks();
+    getProjects().then((res) => {
+      if (res.success && res.data) setProjects(res.data);
+    });
   }, []);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [selectedProjectId]);
 
   const handleDragStart = (event: any) => {
     const { active } = event;
@@ -149,13 +158,37 @@ export default function TareasPage() {
           </p>
         </div>
 
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all self-start"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Nueva Tarea</span>
-        </button>
+        <div className="flex items-center gap-3">
+            <select
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+              className="bg-[#0f1424] text-slate-300 text-sm font-medium border border-slate-800/80 rounded-xl px-3 py-2 outline-none w-48 focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="">Todos los Proyectos</option>
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Buscar tareas..." 
+                className="pl-9 pr-4 py-2 bg-[#0f1424] border border-slate-800/80 rounded-xl text-sm font-medium text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 w-full md:w-64"
+              />
+            </div>
+            <button className="flex items-center gap-2 px-3 py-2 bg-[#161b2c] text-sm font-bold text-slate-300 rounded-xl hover:bg-slate-800 transition-colors border border-slate-800">
+              <Filter className="w-4 h-4" />
+              <span>Filtros</span>
+            </button>
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Nueva Tarea</span>
+            </button>
+          </div>
       </div>
 
       {/* Kanban Board Columns */}
@@ -213,6 +246,11 @@ export default function TareasPage() {
                     return (
                     <DraggableTask key={t.id} task={t}>
                       <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/40 transition-all space-y-2.5 shadow-md group">
+                        {t.coverUrl && (
+                          <div className="w-full h-24 -mt-1 mb-2 rounded-lg overflow-hidden shrink-0 border border-slate-200 dark:border-slate-800">
+                            <img src={t.coverUrl} alt="Cover" className="w-full h-full object-cover" />
+                          </div>
+                        )}
                         {/* Badge & Code */}
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-[10px] font-bold text-indigo-400 bg-indigo-950 px-1.5 py-0.5 rounded border border-indigo-800">

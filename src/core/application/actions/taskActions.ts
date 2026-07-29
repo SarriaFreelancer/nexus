@@ -21,7 +21,8 @@ export async function getTasksByProjectId(projectId: string) {
       include: {
         assignee: true,
         subtasks: true,
-        project: true
+        project: true,
+        attachments: true
       },
       orderBy: { createdAt: "desc" },
     });
@@ -32,15 +33,20 @@ export async function getTasksByProjectId(projectId: string) {
   }
 }
 
-export async function getAllTasks() {
+export async function getAllTasks(projectId?: string) {
   try {
     const { workspace } = await getCurrentWorkspace();
+    const whereClause: any = { project: { workspaceId: workspace.id } };
+    if (projectId) {
+      whereClause.projectId = projectId;
+    }
     const tasks = await prisma.task.findMany({
-      where: { project: { workspaceId: workspace.id } },
+      where: whereClause,
       include: {
         assignee: true,
         subtasks: true,
-        project: true
+        project: true,
+        attachments: true
       },
       orderBy: { createdAt: "desc" },
     });
@@ -338,6 +344,54 @@ export async function toggleTaskCompletion(taskId: string, isCompleted: boolean)
     
     return { success: true, data: updatedTask };
   } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+
+// ==========================================
+// ADJUNTOS (Attachments)
+// ==========================================
+export async function addTaskAttachment(taskId: string, name: string, url: string) {
+  try {
+    const { workspace, role } = await getCurrentWorkspace();
+    if (!hasPermission(role, "DEVELOPER")) throw new Error("UNAUTHORIZED_ROLE");
+
+    const task = await prisma.task.findUnique({ where: { id: taskId }, include: { project: true } });
+    if (!task || task.project.workspaceId !== workspace.id) throw new Error("NOT_FOUND_OR_UNAUTHORIZED");
+
+    const attachment = await prisma.taskAttachment.create({
+      data: {
+        taskId,
+        name,
+        url
+      }
+    });
+
+    revalidatePath("/tareas");
+    revalidatePath(`/proyectos/${task.projectId}`);
+    return { success: true, data: attachment };
+  } catch (error: any) {
+    console.error("Error adding attachment:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function removeTaskAttachment(attachmentId: string) {
+  try {
+    const { workspace, role } = await getCurrentWorkspace();
+    if (!hasPermission(role, "DEVELOPER")) throw new Error("UNAUTHORIZED_ROLE");
+
+    const attachment = await prisma.taskAttachment.findUnique({ where: { id: attachmentId }, include: { task: { include: { project: true } } } });
+    if (!attachment || attachment.task.project.workspaceId !== workspace.id) throw new Error("NOT_FOUND_OR_UNAUTHORIZED");
+
+    await prisma.taskAttachment.delete({ where: { id: attachmentId } });
+
+    revalidatePath("/tareas");
+    revalidatePath(`/proyectos/${attachment.task.projectId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error removing attachment:", error);
     return { success: false, error: error.message };
   }
 }
