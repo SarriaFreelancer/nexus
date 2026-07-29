@@ -53,6 +53,7 @@ export async function createProject(data: {
   clientId?: string;
   technologies: any; // JSON
   estimatedHours?: number;
+  bannerUrl?: string;
   status?: any;
 }) {
   try {

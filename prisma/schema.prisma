@@ -70,6 +70,20 @@ model User {
   timeEntries   TimeEntry[]
   auditLogs     AuditLog[]
   projectEvents ProjectEvent[]
+  notifications Notification[]
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String   @db.Text
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ERROR
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Workspace {
@@ -123,6 +137,7 @@ model Project {
   technologies   Json
   gitRepoUrl     String?
   serverDomain   String?
+  bannerUrl      String?
   estimatedHours Float?
   actualHours    Float            @default(0)
   startDate      DateTime?
@@ -134,8 +149,23 @@ model Project {
   docs           Document[]
   servers        ServerInstance[]
   projectEvents  ProjectEvent[]
+  automations    ProjectAutomation[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
+}
+
+model ProjectAutomation {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String
+  trigger     String   // "TASK_STATUS_CHANGED", "NEW_VERSION"
+  condition   Json?    // e.g. { "from": "DEVELOPMENT", "to": "TESTING" }
+  action      String   // "SEND_NOTIFICATION", "CHANGE_PROJECT_STATUS"
+  actionData  Json?    // e.g. { "message": "..." }
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model ProjectVersion {

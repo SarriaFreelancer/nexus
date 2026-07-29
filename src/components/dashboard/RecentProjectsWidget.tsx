@@ -4,6 +4,7 @@ import React from "react";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AvatarGroup } from "@/components/ui/AvatarGroup";
+import { translateProjectStatus } from "@/lib/utils";
 import { MoreVertical } from "lucide-react";
 import Link from "next/link";
 
@@ -92,7 +93,7 @@ export const RecentProjectsWidget: React.FC<RecentProjectsWidgetProps> = ({ proj
                       : "amber"
                   }
                 >
-                  {proj.status}
+                  {translateProjectStatus(proj.status)}
                 </Badge>
                 <AvatarGroup users={teamMembers} limit={3} />
               </div>

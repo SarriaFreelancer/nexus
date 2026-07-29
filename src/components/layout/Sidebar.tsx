@@ -68,7 +68,7 @@ export const Sidebar: React.FC = () => {
 
       {/* Navigation Links */}
       <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
-        {navigationItems.map((item) => {
+        {navigationItems.filter(item => !item.allowedRoles || item.allowedRoles.includes(mockCurrentUser.role)).map((item) => {
           const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           const Icon = item.icon;
 

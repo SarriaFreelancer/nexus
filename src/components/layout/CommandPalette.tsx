@@ -81,8 +81,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                     className="flex items-center justify-between p-2.5 rounded-xl hover:bg-indigo-600/20 hover:border hover:border-indigo-500/30 cursor-pointer transition-all text-xs"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="h-7 w-7 rounded-lg bg-indigo-950 border border-indigo-700/50 flex items-center justify-center font-bold text-indigo-300 text-[10px]">
-                        {proj.code}
+                      <div className="h-7 w-7 rounded-lg bg-indigo-950 border border-indigo-700/50 flex items-center justify-center font-bold text-indigo-300 text-[10px] overflow-hidden shrink-0">
+                        {proj.bannerUrl ? (
+                          <img src={proj.bannerUrl} alt={proj.name} className="w-full h-full object-cover" />
+                        ) : (
+                          proj.code
+                        )}
                       </div>
                       <div>
                         <p className="font-semibold text-slate-800 dark:text-slate-200">{proj.name}</p>

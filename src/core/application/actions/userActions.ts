@@ -5,10 +5,10 @@ import { getCurrentWorkspace, hasPermission } from "@/lib/serverAuth";
 
 export async function getWorkspaceUsers() {
   try {
-    const { workspace, role } = await getCurrentWorkspace();
+    const { workspace, member } = await getCurrentWorkspace();
     
     // Only Admin can view all users in the new Usuarios module
-    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+    if (member.role !== "ADMIN" && (member.role as any) !== "SUPER_ADMIN") {
       throw new Error("UNAUTHORIZED");
     }
 
@@ -75,7 +75,10 @@ export async function getWorkspaceUsers() {
 
 export async function createUser(data: { name: string; email: string; role: string }) {
   try {
-    const { workspace, user } = await getCurrentWorkspace();
+    const { workspace, user, member } = await getCurrentWorkspace();
+    if (member.role !== "ADMIN") {
+      throw new Error("No tienes permisos para crear usuarios.");
+    }
     const adminUserId = (user as any).id;
 
     // Check if user already exists

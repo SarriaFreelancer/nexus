@@ -5,6 +5,7 @@ import { Search, Plus, Bell, Calendar, SlidersHorizontal } from "lucide-react";
 import { mockCurrentUser } from "@/core/infrastructure/mockData";
 import { CommandPalette } from "./CommandPalette";
 import { ThemeToggle } from "./ThemeToggle";
+import { NotificationBell } from "./NotificationBell";
 
 export const Navbar: React.FC = () => {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
@@ -46,13 +47,7 @@ export const Navbar: React.FC = () => {
             <Plus className="h-4 w-4" />
           </button>
 
-          {/* Notifications Trigger */}
-          <button className="relative h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-all">
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-indigo-600 text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[#090c15]">
-              12
-            </span>
-          </button>
+          <NotificationBell />
 
           {/* Calendar Quick Action */}
           <button className="h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-all">

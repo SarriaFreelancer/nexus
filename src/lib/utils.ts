@@ -16,3 +16,17 @@ export function formatCurrency(amount: number): string {
 export function formatHours(hours: number): string {
   return `${hours}h`;
 }
+
+export function translateProjectStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    "DISCOVERY": "Descubrimiento",
+    "DESIGN": "En Diseño",
+    "DEVELOPMENT": "En Desarrollo",
+    "TESTING": "En Pruebas",
+    "DEPLOYMENT": "En Despliegue",
+    "COMPLETED": "Finalizados",
+    "ON_HOLD": "Pausado",
+    "CANCELLED": "Cancelado"
+  };
+  return statusMap[status] || status;
+}

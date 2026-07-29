@@ -136,6 +136,9 @@ export async function moveTaskStatus(taskId: string, newStatus: any) {
     await recordAuditLog(userId, "MOVE_TASK", "Movió la tarea en Kanban", `Tarea: ${updatedTask.title}`, { project: existing.project.name, before: { status: existing.status }, after: { status: newStatus } });
     await recordProjectEvent(updatedTask.projectId, userId, "TASK_STATUS", `La tarea "${updatedTask.title}" se movió a ${newStatus}`, { taskId: updatedTask.id, before: existing.status, after: newStatus });
 
+    const { processTaskStatusAutomations } = await import("../services/automationService");
+    await processTaskStatusAutomations(updatedTask.projectId, updatedTask.id, existing.status, newStatus, userId);
+
     revalidatePath("/tareas");
     return { success: true, data: updatedTask };
   } catch (error: any) {

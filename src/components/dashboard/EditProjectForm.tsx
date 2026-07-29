@@ -6,7 +6,7 @@ import { getProjectEvents, addProjectComment } from "@/core/application/actions/
 import { 
   MessageSquare, GitCommit, FileText, UserPlus, Clock, Loader2, Send, 
   Info, PieChart as PieChartIcon, Zap, Shield, CheckCircle2, Bot, Filter,
-  Flag, Users, Layers, Activity, FileUp, Pause
+  Flag, Users, Layers, Activity, FileUp, Pause, CheckSquare, Edit3
 } from "lucide-react";
 
 export function EditProjectForm({ project, onSuccess, onCancel }: { project: any, onSuccess: () => void, onCancel: () => void }) {
@@ -22,12 +22,25 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
     });
   }, [project.id]);
 
+  const PRESET_BANNERS = [
+    "https://images.unsplash.com/photo-1550439062-609e1531270e?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80"
+  ];
+
+  const [selectedBanner, setSelectedBanner] = useState(project.bannerUrl && PRESET_BANNERS.includes(project.bannerUrl) ? project.bannerUrl : "");
+  const [customBanner, setCustomBanner] = useState(project.bannerUrl && !PRESET_BANNERS.includes(project.bannerUrl) ? project.bannerUrl : "");
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     const formData = new FormData(e.currentTarget);
+    const bannerToSave = customBanner || selectedBanner;
+
     const data = {
       name: formData.get("name") as string,
       code: formData.get("code") as string,
@@ -36,6 +49,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
       technologies: JSON.stringify((formData.get("technologies") as string).split(",").map(t => t.trim())),
       estimatedHours: Number(formData.get("estimatedHours")),
       status: formData.get("status") as string,
+      bannerUrl: bannerToSave || null,
     };
 
     try {
@@ -65,7 +79,8 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
     if (activeFilter === "Estado") return evt.type === "STATUS_CHANGE";
     if (activeFilter === "Comentarios") return evt.type === "COMMENT";
     if (activeFilter === "Colaboradores") return evt.type === "MEMBER_ADDED" || evt.type === "MEMBER";
-    if (activeFilter === "Fases" || activeFilter === "Sistema" || activeFilter === "Tareas" || activeFilter === "Archivos") return evt.type === "CREATED" || evt.type === "SYSTEM"; // fallback for mocked
+    if (activeFilter === "Tareas") return evt.type === "TASK_ADDED" || evt.type === "TASK_UPDATED" || evt.type === "TASK_STATUS";
+    if (activeFilter === "Fases" || activeFilter === "Sistema" || activeFilter === "Archivos") return evt.type === "CREATED" || evt.type === "SYSTEM";
     return false;
   });
 
@@ -124,6 +139,28 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500"></div>
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Imagen / Portada del Proyecto</label>
+              <div className="grid grid-cols-5 gap-2 mb-2">
+                {PRESET_BANNERS.map((url, idx) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => { setSelectedBanner(url); setCustomBanner(""); }}
+                    className={`h-16 rounded-lg cursor-pointer overflow-hidden border-2 transition-all ${selectedBanner === url ? "border-indigo-500 scale-105 shadow-md" : "border-transparent opacity-70 hover:opacity-100"}`}
+                  >
+                    <img src={url} className="w-full h-full object-cover" alt="Preset" />
+                  </div>
+                ))}
+              </div>
+              <input 
+                type="text" 
+                placeholder="O pega una URL personalizada de imagen..." 
+                value={customBanner}
+                onChange={(e) => { setCustomBanner(e.target.value); setSelectedBanner(""); }}
+                className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1a1f35] focus:outline-none transition-all text-xs" 
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-5">
@@ -199,13 +236,13 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                   Icon = Activity; iconColor = "text-amber-500"; iconBg = "bg-amber-500/10"; badgeText = "Estado"; badgeColor = "bg-amber-500/10 text-amber-500";
                 } else if (evt.type === "COMMENT") {
                   Icon = MessageSquare; iconColor = "text-blue-400"; iconBg = "bg-blue-500/10"; badgeText = "Comentario"; badgeColor = "bg-blue-500/10 text-blue-400";
+                } else if (evt.type === "TASK_ADDED") {
+                  Icon = CheckSquare; iconColor = "text-fuchsia-400"; iconBg = "bg-fuchsia-500/10"; badgeText = "Tarea"; badgeColor = "bg-fuchsia-500/10 text-fuchsia-400";
+                } else if (evt.type === "TASK_UPDATED") {
+                  Icon = Edit3; iconColor = "text-cyan-400"; iconBg = "bg-cyan-500/10"; badgeText = "Edición Tarea"; badgeColor = "bg-cyan-500/10 text-cyan-400";
+                } else if (evt.type === "TASK_STATUS") {
+                  Icon = Layers; iconColor = "text-violet-400"; iconBg = "bg-violet-500/10"; badgeText = "Estado Tarea"; badgeColor = "bg-violet-500/10 text-violet-400";
                 }
-
-                // Temporary override for visual mockup matching
-                if (idx === 0) { Icon = Flag; iconColor = "text-indigo-400"; iconBg = "bg-indigo-500/10 border-indigo-500/20"; badgeText = "Creación"; badgeColor = "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"; }
-                if (idx === 1) { Icon = Users; iconColor = "text-emerald-500"; iconBg = "bg-emerald-500/10 border-emerald-500/20"; badgeText = "Colaborador"; badgeColor = "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"; }
-                if (idx === 2) { Icon = Layers; iconColor = "text-blue-400"; iconBg = "bg-blue-500/10 border-blue-500/20"; badgeText = "Fase"; badgeColor = "bg-blue-500/10 text-blue-400 border border-blue-500/20"; }
-                if (idx === 3) { Icon = Activity; iconColor = "text-amber-500"; iconBg = "bg-amber-500/10 border-amber-500/20"; badgeText = "Estado"; badgeColor = "bg-amber-500/10 text-amber-500 border border-amber-500/20"; }
 
                 return (
                   <div key={evt.id} className="relative pl-8 group">

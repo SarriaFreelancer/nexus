@@ -10,6 +10,7 @@ import { FolderKanban, Plus, Search, Filter, GitBranch, ExternalLink, Globe, Lay
 import { Modal } from "@/components/ui/Modal";
 import { CreateProjectForm } from "@/components/dashboard/CreateProjectForm";
 import { EditProjectForm } from "@/components/dashboard/EditProjectForm";
+import { translateProjectStatus } from "@/lib/utils";
 
 export default function ProyectosPage() {
   const [search, setSearch] = useState("");
@@ -35,7 +36,7 @@ export default function ProyectosPage() {
 
   const filtered = dbProjects.filter((p: any) => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase());
-    const translatedStatus = p.status === "DEVELOPMENT" ? "En Desarrollo" : p.status === "DESIGN" ? "En Diseño" : p.status === "TESTING" ? "En Pruebas" : p.status === "DEPLOYED" ? "En Producción" : p.status;
+    const translatedStatus = translateProjectStatus(p.status);
     const matchesStatus = selectedStatus === "TODOS" || translatedStatus === selectedStatus;
     return matchesSearch && matchesStatus;
   });
@@ -126,7 +127,7 @@ export default function ProyectosPage() {
       ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filtered.map((proj: any) => {
-          const translatedStatus = proj.status === "DEVELOPMENT" ? "En Desarrollo" : proj.status === "DESIGN" ? "En Diseño" : proj.status === "TESTING" ? "En Pruebas" : proj.status === "DEPLOYED" ? "En Producción" : proj.status;
+          const translatedStatus = translateProjectStatus(proj.status);
           
           let progress = 0;
           if (proj.tasks && proj.tasks.length > 0) {
@@ -151,8 +152,12 @@ export default function ProyectosPage() {
               {/* Header Info */}
               <div className="flex items-start justify-between gap-4">
                 <Link href={`/proyectos/${proj.id}`} className="flex items-center gap-3 cursor-pointer group/link">
-                  <div className="h-10 w-10 rounded-xl bg-indigo-950 border border-indigo-700/60 flex items-center justify-center font-black text-indigo-300 text-sm shadow-md">
-                    {proj.code}
+                  <div className="h-10 w-10 rounded-xl bg-indigo-950 border border-indigo-700/60 flex items-center justify-center font-black text-indigo-300 text-sm shadow-md overflow-hidden shrink-0">
+                    {proj.bannerUrl ? (
+                      <img src={proj.bannerUrl} alt={proj.name} className="w-full h-full object-cover" />
+                    ) : (
+                      proj.code
+                    )}
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base group-hover/link:text-indigo-500 dark:group-hover/link:text-indigo-400 transition-colors">
