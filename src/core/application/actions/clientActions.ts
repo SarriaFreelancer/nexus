@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 import { getCurrentWorkspace, hasPermission } from "@/lib/serverAuth";
+import { recordAuditLog } from "./auditActions";
 
 // ==========================================
 // GET (Consultas)
@@ -50,7 +51,8 @@ export async function createClient(data: {
   stage?: string;
 }) {
   try {
-    const { workspace, role } = await getCurrentWorkspace();
+    const { workspace, role, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
     if (!hasPermission(role, "COMMERCIAL")) throw new Error("UNAUTHORIZED_ROLE");
 
     console.log("CREATING CLIENT WITH WORKSPACE:", workspace.id, "DATA:", data);
@@ -62,6 +64,9 @@ export async function createClient(data: {
         stage: data.stage || "LEAD"
       },
     });
+
+    await recordAuditLog(userId, "CREATE_CLIENT", "Creó un nuevo cliente/lead", `Cliente: ${newClient.company}`, { contact: newClient.contactName, stage: newClient.stage });
+
     revalidatePath("/clientes");
     return { success: true, data: newClient };
   } catch (error: any) {
@@ -75,7 +80,8 @@ export async function createClient(data: {
 // ==========================================
 export async function updateClient(id: string, data: Partial<any>) {
   try {
-    const { workspace, role } = await getCurrentWorkspace();
+    const { workspace, role, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
     if (!hasPermission(role, "COMMERCIAL")) throw new Error("UNAUTHORIZED_ROLE");
 
     const existing = await prisma.client.findUnique({ where: { id, workspaceId: workspace.id } });
@@ -85,6 +91,9 @@ export async function updateClient(id: string, data: Partial<any>) {
       where: { id },
       data,
     });
+
+    await recordAuditLog(userId, "UPDATE_CLIENT", "Editó el cliente/lead", `Cliente: ${updatedClient.company}`, { updatedFields: Object.keys(data) });
+
     revalidatePath("/clientes");
     return { success: true, data: updatedClient };
   } catch (error: any) {

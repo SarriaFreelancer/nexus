@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 import { getCurrentWorkspace, hasPermission } from "@/lib/serverAuth";
+import { recordAuditLog } from "./auditActions";
+import { recordProjectEvent } from "./projectEventActions";
 
 // ==========================================
 // GET (Consultas)
@@ -62,7 +64,8 @@ export async function createTask(data: {
   assigneeId?: string;
 }) {
   try {
-    const { workspace, role } = await getCurrentWorkspace();
+    const { workspace, role, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
     if (!hasPermission(role, "DEVELOPER")) throw new Error("UNAUTHORIZED_ROLE");
     
     // Verify project belongs to workspace
@@ -72,6 +75,10 @@ export async function createTask(data: {
     const newTask = await prisma.task.create({
       data,
     });
+
+    await recordAuditLog(userId, "CREATE_TASK", "Creó una nueva tarea", `Tarea: ${newTask.title}`, { project: proj.name, after: { title: newTask.title, status: newTask.status } });
+    await recordProjectEvent(data.projectId, userId, "TASK_ADDED", `Se creó la tarea "${newTask.title}"`, { taskId: newTask.id, status: newTask.status, title: newTask.title });
+
     revalidatePath("/tareas");
     revalidatePath(`/proyectos/${data.projectId}`);
     return { success: true, data: newTask };
@@ -86,7 +93,8 @@ export async function createTask(data: {
 // ==========================================
 export async function updateTask(id: string, data: Partial<any>) {
   try {
-    const { workspace, role } = await getCurrentWorkspace();
+    const { workspace, role, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
     if (!hasPermission(role, "DEVELOPER")) throw new Error("UNAUTHORIZED_ROLE");
 
     const existing = await prisma.task.findUnique({ where: { id }, include: { project: true } });
@@ -96,6 +104,10 @@ export async function updateTask(id: string, data: Partial<any>) {
       where: { id },
       data,
     });
+
+    await recordAuditLog(userId, "UPDATE_TASK", "Editó la tarea", `Tarea: ${updatedTask.title}`, { project: existing.project.name, updatedFields: Object.keys(data) });
+    await recordProjectEvent(updatedTask.projectId, userId, "TASK_UPDATED", `Se actualizó la tarea "${updatedTask.title}"`, { taskId: updatedTask.id, title: updatedTask.title });
+
     revalidatePath("/tareas");
     revalidatePath(`/proyectos/${updatedTask.projectId}`);
     return { success: true, data: updatedTask };
@@ -109,7 +121,8 @@ export async function updateTask(id: string, data: Partial<any>) {
 // ==========================================
 export async function moveTaskStatus(taskId: string, newStatus: any) {
   try {
-    const { workspace, role } = await getCurrentWorkspace();
+    const { workspace, role, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
     if (!hasPermission(role, "DEVELOPER")) throw new Error("UNAUTHORIZED_ROLE");
 
     const existing = await prisma.task.findUnique({ where: { id: taskId }, include: { project: true } });
@@ -119,6 +132,10 @@ export async function moveTaskStatus(taskId: string, newStatus: any) {
       where: { id: taskId },
       data: { status: newStatus },
     });
+
+    await recordAuditLog(userId, "MOVE_TASK", "Movió la tarea en Kanban", `Tarea: ${updatedTask.title}`, { project: existing.project.name, before: { status: existing.status }, after: { status: newStatus } });
+    await recordProjectEvent(updatedTask.projectId, userId, "TASK_STATUS", `La tarea "${updatedTask.title}" se movió a ${newStatus}`, { taskId: updatedTask.id, before: existing.status, after: newStatus });
+
     revalidatePath("/tareas");
     return { success: true, data: updatedTask };
   } catch (error: any) {
@@ -131,12 +148,16 @@ export async function moveTaskStatus(taskId: string, newStatus: any) {
 // ==========================================
 export async function deleteTask(id: string) {
   try {
-    const { workspace, role } = await getCurrentWorkspace();
+    const { workspace, role, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
     if (!hasPermission(role, "MANAGER")) throw new Error("UNAUTHORIZED_ROLE");
 
     const task = await prisma.task.findUnique({ where: { id }, include: { project: true } });
     if (task && task.project.workspaceId === workspace.id) {
       await prisma.task.delete({ where: { id } });
+
+      await recordAuditLog(userId, "DELETE_TASK", "Eliminó la tarea", `Tarea: ${task.title}`, { project: task.project.name });
+
       revalidatePath("/tareas");
       revalidatePath(`/proyectos/${task.projectId}`);
     } else if (task) {
@@ -147,3 +168,72 @@ export async function deleteTask(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+// ==========================================
+// SUBTASKS (Subtareas)
+// ==========================================
+export async function addSubtask(taskId: string, title: string) {
+  try {
+    const { workspace, role } = await getCurrentWorkspace();
+    if (!hasPermission(role, "DEVELOPER")) throw new Error("UNAUTHORIZED_ROLE");
+
+    const task = await prisma.task.findUnique({ where: { id: taskId }, include: { project: true } });
+    if (!task || task.project.workspaceId !== workspace.id) throw new Error("NOT_FOUND_OR_UNAUTHORIZED");
+
+    const subtask = await prisma.subtask.create({
+      data: {
+        taskId,
+        title,
+        completed: false,
+      },
+    });
+    revalidatePath("/tareas");
+    return { success: true, data: subtask };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function toggleSubtask(subtaskId: string, completed: boolean) {
+  try {
+    const { workspace, role } = await getCurrentWorkspace();
+    if (!hasPermission(role, "DEVELOPER")) throw new Error("UNAUTHORIZED_ROLE");
+
+    const subtask = await prisma.subtask.findUnique({
+      where: { id: subtaskId },
+      include: { task: { include: { project: true } } },
+    });
+    if (!subtask || subtask.task.project.workspaceId !== workspace.id) throw new Error("NOT_FOUND_OR_UNAUTHORIZED");
+
+    const updated = await prisma.subtask.update({
+      where: { id: subtaskId },
+      data: { completed },
+    });
+    revalidatePath("/tareas");
+    return { success: true, data: updated };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteSubtask(subtaskId: string) {
+  try {
+    const { workspace, role } = await getCurrentWorkspace();
+    if (!hasPermission(role, "DEVELOPER")) throw new Error("UNAUTHORIZED_ROLE");
+
+    const subtask = await prisma.subtask.findUnique({
+      where: { id: subtaskId },
+      include: { task: { include: { project: true } } },
+    });
+    if (!subtask || subtask.task.project.workspaceId !== workspace.id) throw new Error("NOT_FOUND_OR_UNAUTHORIZED");
+
+    await prisma.subtask.delete({
+      where: { id: subtaskId },
+    });
+    revalidatePath("/tareas");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+

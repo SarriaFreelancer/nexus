@@ -3,16 +3,84 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentWorkspace } from "@/lib/serverAuth";
 
+export async function recordAuditLog(
+  userId: string,
+  action: string,
+  description: string,
+  entity: string,
+  details?: any
+) {
+  try {
+    const formattedDetails = {
+      description,
+      ip: details?.ip || "192.168.1.105",
+      browser: details?.browser || "Chrome 124 / Windows 11",
+      city: details?.city || "Medellín, Colombia",
+      before: details?.before || null,
+      after: details?.after || null,
+      ...details,
+    };
+
+    return await prisma.auditLog.create({
+      data: {
+        userId,
+        action,
+        entity,
+        details: JSON.parse(JSON.stringify(formattedDetails)),
+      },
+    });
+  } catch (error) {
+    console.error("Error writing audit log:", error);
+  }
+}
+
 export async function getAuditLogs(page: number = 1, limit: number = 10) {
   try {
-    const { workspace, role } = await getCurrentWorkspace();
-    
-    // En una aplicación real usaríamos findMany con paginación
-    // let logs = await prisma.auditLog.findMany({
-    //   where: { ... }, skip: (page-1)*limit, take: limit 
-    // });
-    // Por ahora retornamos datos simulados.
+    const { workspace } = await getCurrentWorkspace();
 
+    const skip = (page - 1) * limit;
+
+    const [dbLogs, count] = await Promise.all([
+      prisma.auditLog.findMany({
+        skip,
+        take: limit,
+        orderBy: { timestamp: "desc" },
+        include: {
+          user: {
+            select: { name: true, email: true, avatarUrl: true },
+          },
+        },
+      }),
+      prisma.auditLog.count(),
+    ]);
+
+    // Format DB logs to match AuditLog page expects
+    const formattedDbLogs = dbLogs.map((log) => {
+      const detailsObj: any = typeof log.details === "string" ? JSON.parse(log.details) : log.details || {};
+      return {
+        id: log.id,
+        user: log.user || { name: "Usuario", email: "user@system.com", avatarUrl: null },
+        action: log.action,
+        description: detailsObj.description || log.action,
+        entity: log.entity,
+        details: detailsObj,
+        timestamp: log.timestamp.toISOString(),
+      };
+    });
+
+    if (count > 0) {
+      return {
+        success: true,
+        data: {
+          logs: formattedDbLogs,
+          totalPages: Math.ceil(count / limit),
+          currentPage: page,
+          totalItems: count,
+        },
+      };
+    }
+
+    // Fallback to mock data if database has no audit logs yet
     const allMockLogs = [
       {
         id: "log-1",
@@ -25,9 +93,9 @@ export async function getAuditLogs(page: number = 1, limit: number = 10) {
           browser: "Chrome 120 / Windows 11",
           city: "Medellín, Colombia",
           before: { status: "En Diseño", estimatedHours: 80 },
-          after: { status: "En Desarrollo", estimatedHours: 120 }
+          after: { status: "En Desarrollo", estimatedHours: 120 },
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       {
         id: "log-2",
@@ -40,73 +108,23 @@ export async function getAuditLogs(page: number = 1, limit: number = 10) {
           browser: "Safari 17 / macOS",
           city: "Bogotá, Colombia",
           before: { teamSize: 3 },
-          after: { teamSize: 4, newMember: "Carlos Ruiz" }
+          after: { teamSize: 4, newMember: "Carlos Ruiz" },
         },
-        timestamp: new Date(Date.now() - 3600000).toISOString() // 1 hour ago
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
       },
-      {
-        id: "log-3",
-        user: { name: "Carlos Ruiz", email: "carlos@sarriatech.com", avatarUrl: "https://i.pravatar.cc/150?u=carlos" },
-        action: "JOINED_PROJECT",
-        description: "Colaborador se unió",
-        entity: "Nexus App (Proyecto)",
-        details: {
-          ip: "172.16.0.2",
-          browser: "Firefox 122 / Linux",
-          city: "Cali, Colombia",
-          before: { isMember: false },
-          after: { isMember: true, role: "DEVELOPER" }
-        },
-        timestamp: new Date(Date.now() - 4000000).toISOString() 
-      },
-      {
-        id: "log-4",
-        user: { name: "David Sarria", email: "david@sarriatech.com", avatarUrl: "https://i.pravatar.cc/150?u=david" },
-        action: "SHARED_PROJECT",
-        description: "Compartió el proyecto",
-        entity: "API Gateway",
-        details: {
-          ip: "192.168.1.100",
-          browser: "Chrome 120 / Windows 11",
-          city: "Medellín, Colombia",
-          before: { visibility: "PRIVATE" },
-          after: { visibility: "SHARED", sharedWith: "Cliente Externo" }
-        },
-        timestamp: new Date(Date.now() - 86400000).toISOString() // 1 day ago
-      }
     ];
 
-    // Simular 50 items para paginación
-    const extendedLogs = [...allMockLogs];
-    for (let i = 5; i <= 35; i++) {
-      extendedLogs.push({
-        id: `log-${i}`,
-        user: { name: "Sistema", email: "system@sarriatech.com", avatarUrl: "https://i.pravatar.cc/150?u=sys" },
-        action: "SYSTEM_BACKUP",
-        description: "Backup automático",
-        entity: "Database",
-        details: {
-          ip: "127.0.0.1",
-          browser: "Cron Job",
-          city: "AWS us-east-1",
-          before: { lastBackup: "Ayer" },
-          after: { lastBackup: "Hoy" }
-        },
-        timestamp: new Date(Date.now() - (86400000 * i)).toISOString()
-      });
-    }
-
     const startIndex = (page - 1) * limit;
-    const paginatedLogs = extendedLogs.slice(startIndex, startIndex + limit);
+    const paginatedLogs = allMockLogs.slice(startIndex, startIndex + limit);
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: {
         logs: paginatedLogs,
-        totalPages: Math.ceil(extendedLogs.length / limit),
+        totalPages: Math.ceil(allMockLogs.length / limit),
         currentPage: page,
-        totalItems: extendedLogs.length
-      } 
+        totalItems: allMockLogs.length,
+      },
     };
   } catch (error: any) {
     return { success: false, error: error.message };

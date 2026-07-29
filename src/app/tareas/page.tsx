@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CheckSquare, Plus, Search, Filter, MoreHorizontal, User as UserIcon, Calendar, CheckCircle2, Loader2, GripVertical } from "lucide-react";
+import { CheckSquare, Plus, Search, Filter, MoreHorizontal, User as UserIcon, Calendar, CheckCircle2, Loader2, GripVertical, Edit3 } from "lucide-react";
 import { getAllTasks, moveTaskStatus } from "@/core/application/actions/taskActions";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { CreateTaskForm } from "@/components/dashboard/CreateTaskForm";
+import { EditTaskForm } from "@/components/dashboard/EditTaskForm";
 import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useDroppable } from '@dnd-kit/core';
 import { useDraggable } from '@dnd-kit/core';
@@ -55,6 +56,7 @@ export default function TareasPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editTask, setEditTask] = useState<any | null>(null);
   const [activeTask, setActiveTask] = useState<any | null>(null);
 
   const sensors = useSensors(
@@ -121,6 +123,19 @@ export default function TareasPage() {
             fetchTasks();
           }} 
         />
+      </Modal>
+
+      <Modal isOpen={!!editTask} onClose={() => setEditTask(null)} title="Editar Tarea" width="max-w-xl">
+        {editTask && (
+          <EditTaskForm
+            task={editTask}
+            onCancel={() => setEditTask(null)}
+            onSuccess={() => {
+              setEditTask(null);
+              fetchTasks();
+            }}
+          />
+        )}
       </Modal>
 
       {/* Header */}
@@ -203,9 +218,22 @@ export default function TareasPage() {
                           <span className="text-[10px] font-bold text-indigo-400 bg-indigo-950 px-1.5 py-0.5 rounded border border-indigo-800">
                             {t.project?.code || "TSK"}-{t.id.substring(0,4).toUpperCase()}
                           </span>
-                          <Badge variant={t.priority === "URGENT" || t.priority === "HIGH" ? "rose" : t.priority === "MEDIUM" ? "amber" : "neutral"}>
-                            {t.priority}
-                          </Badge>
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant={t.priority === "URGENT" || t.priority === "HIGH" ? "rose" : t.priority === "MEDIUM" ? "amber" : "neutral"}>
+                              {t.priority}
+                            </Badge>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditTask(t);
+                              }}
+                              className="p-1 text-slate-400 hover:text-indigo-400 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                              title="Editar tarea"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
 
                         {/* Title */}

@@ -32,7 +32,8 @@ export async function getProjectEvents(projectId: string) {
 
 export async function addProjectComment(projectId: string, content: string) {
   try {
-    const { workspace, userId } = await getCurrentWorkspace();
+    const { workspace, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
     
     const project = await prisma.project.findFirst({
       where: { id: projectId, workspaceId: workspace.id }

@@ -72,3 +72,37 @@ export async function getWorkspaceUsers() {
     return { success: false, error: error.message };
   }
 }
+
+export async function createUser(data: { name: string; email: string; role: string }) {
+  try {
+    const { workspace, user } = await getCurrentWorkspace();
+    const adminUserId = (user as any).id;
+
+    // Check if user already exists
+    let dbUser = await prisma.user.findUnique({ where: { email: data.email } });
+    if (!dbUser) {
+      dbUser = await prisma.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+        },
+      });
+    }
+
+    // Add to workspace
+    await prisma.workspaceMember.create({
+      data: {
+        workspaceId: workspace.id,
+        userId: dbUser.id,
+        role: data.role as any,
+      },
+    });
+
+    const { recordAuditLog } = await import("./auditActions");
+    await recordAuditLog(adminUserId, "CREATE_USER", "Registró un nuevo colaborador / usuario", `Usuario: ${data.name}`, { email: data.email, role: data.role });
+
+    return { success: true, data: dbUser };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

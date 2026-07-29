@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { getCurrentWorkspace, hasPermission } from "@/lib/serverAuth";
 import { recordProjectEvent } from "./projectEventActions";
+import { recordAuditLog } from "./auditActions";
 
 // ==========================================
 // GET (Consultas)
@@ -55,7 +56,8 @@ export async function createProject(data: {
   status?: any;
 }) {
   try {
-    const { workspace, role, userId } = await getCurrentWorkspace();
+    const { workspace, role, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
     if (!hasPermission(role, "MANAGER")) throw new Error("UNAUTHORIZED_ROLE");
 
     const newProject = await prisma.project.create({
@@ -66,6 +68,7 @@ export async function createProject(data: {
     });
 
     await recordProjectEvent(newProject.id, userId, "CREATED", "Proyecto creado", { status: newProject.status });
+    await recordAuditLog(userId, "CREATE_PROJECT", "Creó un proyecto", `Proyecto: ${newProject.name}`, { after: { name: newProject.name, status: newProject.status } });
 
     revalidatePath("/proyectos");
     return { success: true, data: newProject };
@@ -80,7 +83,8 @@ export async function createProject(data: {
 // ==========================================
 export async function updateProject(id: string, data: Partial<any>) {
   try {
-    const { workspace, role, userId } = await getCurrentWorkspace();
+    const { workspace, role, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
     if (!hasPermission(role, "MANAGER")) throw new Error("UNAUTHORIZED_ROLE");
 
     // First ensure the project belongs to the workspace
@@ -94,8 +98,10 @@ export async function updateProject(id: string, data: Partial<any>) {
 
     if (existing.status !== updatedProject.status) {
       await recordProjectEvent(updatedProject.id, userId, "STATUS_CHANGE", `Estado actualizado a ${updatedProject.status}`, { before: existing.status, after: updatedProject.status });
+      await recordAuditLog(userId, "CHANGE_STATUS", "Cambió el estado del proyecto", `Proyecto: ${updatedProject.name}`, { before: { status: existing.status }, after: { status: updatedProject.status } });
     } else {
       await recordProjectEvent(updatedProject.id, userId, "UPDATED", "Proyecto actualizado", { updatedFields: Object.keys(data) });
+      await recordAuditLog(userId, "UPDATE_PROJECT", "Editó la información del proyecto", `Proyecto: ${updatedProject.name}`, { updatedFields: Object.keys(data) });
     }
 
     revalidatePath("/proyectos");
@@ -110,16 +116,19 @@ export async function updateProject(id: string, data: Partial<any>) {
 // ==========================================
 export async function deleteProject(id: string) {
   try {
-    const { workspace, role } = await getCurrentWorkspace();
+    const { workspace, role, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
     if (!hasPermission(role, "ADMIN")) throw new Error("UNAUTHORIZED_ROLE");
 
-    // First ensure the project belongs to the workspace
     const existing = await prisma.project.findUnique({ where: { id, workspaceId: workspace.id } });
     if (!existing) throw new Error("NOT_FOUND_OR_UNAUTHORIZED");
 
     await prisma.project.delete({
       where: { id },
     });
+
+    await recordAuditLog(userId, "DELETE_PROJECT", "Eliminó un proyecto", `Proyecto: ${existing.name}`, { before: { name: existing.name, code: existing.code } });
+
     revalidatePath("/proyectos");
     return { success: true, message: "Project deleted successfully" };
   } catch (error: any) {

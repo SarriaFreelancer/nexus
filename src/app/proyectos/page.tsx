@@ -52,7 +52,7 @@ export default function ProyectosPage() {
         />
       </Modal>
 
-      <Modal isOpen={!!editProject} onClose={() => setEditProject(null)} title="Editar Proyecto">
+      <Modal isOpen={!!editProject} onClose={() => setEditProject(null)} title="Editar Proyecto" width="max-w-[1000px]">
         {editProject && (
           <EditProjectForm 
             project={editProject}

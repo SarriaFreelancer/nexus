@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 import { getCurrentWorkspace, hasPermission } from "@/lib/serverAuth";
+import { recordAuditLog } from "./auditActions";
 
 // ==========================================
 // GET (Consultas)
@@ -36,7 +37,8 @@ export async function createServer(data: {
   status?: string;
 }) {
   try {
-    const { workspace, role } = await getCurrentWorkspace();
+    const { workspace, role, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
     if (!hasPermission(role, "ADMIN")) throw new Error("UNAUTHORIZED_ROLE");
 
     const newServer = await prisma.serverInstance.create({
@@ -49,6 +51,9 @@ export async function createServer(data: {
         diskUsage: 0
       },
     });
+
+    await recordAuditLog(userId, "CREATE_SERVER", "Añadió un nuevo servidor de infraestructura", `Servidor: ${newServer.name}`, { ip: newServer.ipAddress, provider: newServer.provider });
+
     revalidatePath("/infraestructura");
     return { success: true, data: newServer };
   } catch (error: any) {

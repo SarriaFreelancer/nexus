@@ -31,6 +31,8 @@ enum ProjectStatus {
   DEPLOYED
   MAINTENANCE
   PAUSED
+  COMPLETED
+  ARCHIVED
 }
 
 enum Priority {
