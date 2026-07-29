@@ -44,21 +44,21 @@ export const MiniCalendarWidget: React.FC = () => {
   ];
 
   return (
-    <div className="p-5 rounded-2xl bg-[#0f1424] border border-slate-800/80 hover:border-slate-700/80 transition-all flex flex-col justify-between">
+    <div className="p-5 rounded-2xl bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700/80 transition-all flex flex-col justify-between">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-slate-100">Calendario</h3>
+        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Calendario</h3>
         <button className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
           Ver calendario
         </button>
       </div>
 
       <div className="flex items-center justify-between mb-2 px-1">
-        <span className="text-xs font-bold text-slate-200">Mayo 2025</span>
+        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Mayo 2025</span>
         <div className="flex items-center gap-1">
-          <button className="p-1 rounded-lg hover:bg-slate-800 text-slate-400">
+          <button className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">
             <ChevronLeft className="h-3.5 w-3.5" />
           </button>
-          <button className="p-1 rounded-lg hover:bg-slate-800 text-slate-400">
+          <button className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -67,7 +67,7 @@ export const MiniCalendarWidget: React.FC = () => {
       {/* Grid */}
       <div className="grid grid-cols-7 gap-1 text-center text-[10px]">
         {daysHeader.map((d, i) => (
-          <span key={i} className="font-semibold text-slate-500 py-1">
+          <span key={i} className="font-semibold text-slate-400 dark:text-slate-500 py-1">
             {d}
           </span>
         ))}
@@ -78,7 +78,7 @@ export const MiniCalendarWidget: React.FC = () => {
               item.isSelected
                 ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-600/40"
                 : item.isCurrentMonth
-                ? "text-slate-300 hover:bg-slate-800/80 cursor-pointer"
+                ? "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800/80 cursor-pointer"
                 : "text-slate-600"
             }`}
           >

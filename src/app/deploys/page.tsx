@@ -14,23 +14,23 @@ export default function DeploysPage() {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
       <div>
-        <h1 className="text-xl font-black text-slate-100 flex items-center gap-2">
+        <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
           <Rocket className="h-5 w-5 text-indigo-400" /> Pipeline de Deploys & Releases
         </h1>
-        <p className="text-xs text-slate-400 font-medium mt-0.5">
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
           Historial de despliegues automatizados (CI/CD), builds en Vercel/Docker y logs de compilación.
         </p>
       </div>
 
-      <div className="p-5 rounded-2xl bg-[#0f1424] border border-slate-800/80 space-y-4 shadow-xl">
+      <div className="p-5 rounded-2xl bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800/80 space-y-4 shadow-xl">
         <div className="space-y-3">
           {deploys.map((dep, idx) => (
-            <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex-wrap gap-3">
+            <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex-wrap gap-3">
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
                 <div>
-                  <h4 className="font-bold text-slate-100 text-sm">{dep.project} ({dep.env})</h4>
-                  <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">{dep.project} ({dep.env})</h4>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     <span className="font-mono text-indigo-400">{dep.version}</span>
                     <span>•</span>
                     <span className="flex items-center gap-1 font-mono"><GitBranch className="h-3 w-3" /> {dep.commit}</span>
@@ -38,7 +38,7 @@ export default function DeploysPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-xs text-slate-400">
+              <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
                 <span>Duración: {dep.duration}</span>
                 <span>{dep.time}</span>
                 <Badge variant="emerald">Completado</Badge>

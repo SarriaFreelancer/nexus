@@ -188,9 +188,9 @@ export const mockServers: ServerTelemetry[] = [
     environment: "Producción",
     ip: "192.168.1.100",
     status: "ONLINE",
-    cpu: 18,
-    ram: 43,
-    disk: 29,
+    cpu: 95,
+    ram: 92,
+    disk: 88,
   },
   {
     id: "srv-2",

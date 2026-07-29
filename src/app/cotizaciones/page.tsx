@@ -16,10 +16,10 @@ export default function CotizacionesPage() {
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-slate-100 flex items-center gap-2">
+          <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <FileText className="h-5 w-5 text-indigo-400" /> Cotizaciones & Contratos
           </h1>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
             Generación de propuestas comerciales, estimaciones de horas e hitos de pago.
           </p>
         </div>
@@ -28,11 +28,11 @@ export default function CotizacionesPage() {
         </button>
       </div>
 
-      <div className="p-5 rounded-2xl bg-[#0f1424] border border-slate-800/80 space-y-4 shadow-xl">
+      <div className="p-5 rounded-2xl bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800/80 space-y-4 shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <th className="pb-3 font-semibold">Código</th>
                 <th className="pb-3 font-semibold">Cliente</th>
                 <th className="pb-3 font-semibold">Proyecto</th>
@@ -43,11 +43,11 @@ export default function CotizacionesPage() {
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {quotes.map((q, i) => (
-                <tr key={i} className="hover:bg-slate-900/40 transition-colors">
+                <tr key={i} className="hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-colors">
                   <td className="py-3 font-bold text-indigo-400">{q.code}</td>
-                  <td className="py-3 font-semibold text-slate-200">{q.client}</td>
-                  <td className="py-3 text-slate-400">{q.project}</td>
-                  <td className="py-3 text-slate-400">{q.date}</td>
+                  <td className="py-3 font-semibold text-slate-800 dark:text-slate-200">{q.client}</td>
+                  <td className="py-3 text-slate-500 dark:text-slate-400">{q.project}</td>
+                  <td className="py-3 text-slate-500 dark:text-slate-400">{q.date}</td>
                   <td className="py-3 text-right font-extrabold text-emerald-400">{formatCurrency(q.amount)}</td>
                   <td className="py-3 text-right">
                     <Badge variant={q.status === "Aprobada" ? "emerald" : "amber"}>{q.status}</Badge>

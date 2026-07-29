@@ -57,6 +57,7 @@ enum TaskStatus {
 model User {
   id            String            @id @default(uuid())
   email         String            @unique
+  password      String?
   name          String
   avatarUrl     String?
   globalRole    GlobalRole        @default(USER)
@@ -66,6 +67,7 @@ model User {
   tasksAssigned Task[]            @relation("TaskAssignee")
   timeEntries   TimeEntry[]
   auditLogs     AuditLog[]
+  projectEvents ProjectEvent[]
 }
 
 model Workspace {
@@ -129,6 +131,7 @@ model Project {
   tasks          Task[]
   docs           Document[]
   servers        ServerInstance[]
+  projectEvents  ProjectEvent[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 }
@@ -231,4 +234,17 @@ model AuditLog {
   details   Json?
   timestamp DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model ProjectEvent {
+  id          String   @id @default(uuid())
+  projectId   String
+  userId      String
+  type        String   // "STATUS_CHANGE", "COMMENT", "MEMBER_ADDED", "FILE_UPLOADED", "MILESTONE"
+  content     String?  @db.Text
+  details     Json?
+  createdAt   DateTime @default(now())
+  
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
 }

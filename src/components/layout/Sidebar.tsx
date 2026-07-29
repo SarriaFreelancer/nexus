@@ -7,10 +7,12 @@ import { navigationItems } from "@/core/config/navigation";
 import { mockCurrentUser } from "@/core/infrastructure/mockData";
 import { ChevronDown, ChevronsLeft, ChevronsRight, Layers, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProfileModal } from "./ProfileModal";
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
     <aside
@@ -104,14 +106,17 @@ export const Sidebar: React.FC = () => {
       {/* Bottom Profile & Toggle */}
       <div className="p-3 border-t border-slate-800/60 space-y-3">
         {!collapsed ? (
-          <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/50 border border-slate-800/50">
+          <button 
+            onClick={() => setIsProfileOpen(true)}
+            className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-900/50 border border-slate-800/50 hover:bg-slate-900/80 transition-colors"
+          >
             <div className="flex items-center gap-2.5">
               <img
                 src={mockCurrentUser.avatarUrl}
                 alt={mockCurrentUser.name}
                 className="h-8 w-8 rounded-lg object-cover ring-1 ring-indigo-500/40"
               />
-              <div className="truncate">
+              <div className="truncate text-left">
                 <p className="text-xs font-semibold text-slate-200 leading-tight truncate">
                   {mockCurrentUser.name}
                 </p>
@@ -121,16 +126,15 @@ export const Sidebar: React.FC = () => {
                 </div>
               </div>
             </div>
-            <ChevronDown className="h-4 w-4 text-slate-400" />
-          </div>
+          </button>
         ) : (
-          <div className="flex justify-center">
+          <button onClick={() => setIsProfileOpen(true)} className="flex justify-center w-full hover:opacity-80 transition-opacity">
             <img
               src={mockCurrentUser.avatarUrl}
               alt={mockCurrentUser.name}
               className="h-8 w-8 rounded-lg object-cover ring-1 ring-indigo-500/40"
             />
-          </div>
+          </button>
         )}
 
         <button
@@ -141,6 +145,7 @@ export const Sidebar: React.FC = () => {
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
         </button>
       </div>
+      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </aside>
   );
 };

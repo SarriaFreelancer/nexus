@@ -45,9 +45,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center pt-24 px-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <div className="w-full max-w-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         {/* Input Bar */}
-        <div className="flex items-center px-4 py-3.5 border-b border-slate-800 gap-3">
+        <div className="flex items-center px-4 py-3.5 border-b border-slate-200 dark:border-slate-800 gap-3">
           <Search className="h-5 w-5 text-indigo-400 shrink-0" />
           <input
             type="text"
@@ -55,9 +55,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
-            className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+            className="w-full bg-transparent text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none"
           />
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-800 text-slate-400">
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -85,11 +85,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                         {proj.code}
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-200">{proj.name}</p>
-                        <p className="text-[10px] text-slate-400">{proj.category} • {proj.clientName}</p>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">{proj.name}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400">{proj.category} • {proj.clientName}</p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
                       v{proj.currentVersion}
                     </span>
                   </div>
@@ -118,9 +118,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                       <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-800">
                         {task.code}
                       </span>
-                      <span className="font-semibold text-slate-200">{task.title}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{task.title}</span>
                     </div>
-                    <span className="text-[10px] text-slate-400">{task.projectName}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">{task.projectName}</span>
                   </div>
                 ))}
               </div>
@@ -144,8 +144,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                     className="flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-600/20 hover:border hover:border-blue-500/30 cursor-pointer transition-all text-xs"
                   >
                     <div>
-                      <p className="font-semibold text-slate-200">{client.company}</p>
-                      <p className="text-[10px] text-slate-400">{client.contactName} • {client.email}</p>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200">{client.company}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{client.contactName} • {client.email}</p>
                     </div>
                     <span className="text-[10px] font-bold text-blue-400 bg-blue-950 px-2 py-0.5 rounded border border-blue-800">
                       {client.stage}
@@ -173,8 +173,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                     className="flex items-center justify-between p-2.5 rounded-xl hover:bg-amber-600/20 hover:border hover:border-amber-500/30 cursor-pointer transition-all text-xs"
                   >
                     <div>
-                      <p className="font-semibold text-slate-200">{server.name}</p>
-                      <p className="text-[10px] text-slate-400">{server.environment} • IP: {server.ip}</p>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200">{server.name}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{server.environment} • IP: {server.ip}</p>
                     </div>
                     <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
                       {server.status}
@@ -187,7 +187,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
         </div>
 
         {/* Footer info */}
-        <div className="px-4 py-2 bg-slate-950 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+        <div className="px-4 py-2 bg-slate-950 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
           <div className="flex items-center gap-2">
             <Command className="h-3 w-3" />
             <span>Navega con flechas y presiona Enter</span>

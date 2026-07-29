@@ -1,0 +1,128 @@
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+
+import { getCurrentWorkspace, hasPermission } from "@/lib/serverAuth";
+import { recordProjectEvent } from "./projectEventActions";
+
+// ==========================================
+// GET (Consultas)
+// ==========================================
+export async function getProjects() {
+  try {
+    const { workspace } = await getCurrentWorkspace();
+    const projects = await prisma.project.findMany({
+      where: { workspaceId: workspace.id },
+      include: {
+        client: true,
+        tasks: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return { success: true, data: projects };
+  } catch (error: any) {
+    console.error("Error fetching projects:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getProjectById(id: string) {
+  try {
+    const { workspace } = await getCurrentWorkspace();
+    const project = await prisma.project.findUnique({
+      where: { id, workspaceId: workspace.id },
+      include: { client: true, tasks: true },
+    });
+    if (!project) throw new Error("Project not found or unauthorized");
+    return { success: true, data: project };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// ==========================================
+// POST (Creación)
+// ==========================================
+export async function createProject(data: {
+  name: string;
+  code: string;
+  description?: string;
+  category: string;
+  clientId?: string;
+  technologies: any; // JSON
+  estimatedHours?: number;
+  status?: any;
+}) {
+  try {
+    const { workspace, role, userId } = await getCurrentWorkspace();
+    if (!hasPermission(role, "MANAGER")) throw new Error("UNAUTHORIZED_ROLE");
+
+    const newProject = await prisma.project.create({
+      data: {
+        ...data,
+        workspaceId: workspace.id,
+      },
+    });
+
+    await recordProjectEvent(newProject.id, userId, "CREATED", "Proyecto creado", { status: newProject.status });
+
+    revalidatePath("/proyectos");
+    return { success: true, data: newProject };
+  } catch (error: any) {
+    console.error("Error creating project:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ==========================================
+// PUT/PATCH (Edición)
+// ==========================================
+export async function updateProject(id: string, data: Partial<any>) {
+  try {
+    const { workspace, role, userId } = await getCurrentWorkspace();
+    if (!hasPermission(role, "MANAGER")) throw new Error("UNAUTHORIZED_ROLE");
+
+    // First ensure the project belongs to the workspace
+    const existing = await prisma.project.findUnique({ where: { id, workspaceId: workspace.id } });
+    if (!existing) throw new Error("NOT_FOUND_OR_UNAUTHORIZED");
+
+    const updatedProject = await prisma.project.update({
+      where: { id },
+      data,
+    });
+
+    if (existing.status !== updatedProject.status) {
+      await recordProjectEvent(updatedProject.id, userId, "STATUS_CHANGE", `Estado actualizado a ${updatedProject.status}`, { before: existing.status, after: updatedProject.status });
+    } else {
+      await recordProjectEvent(updatedProject.id, userId, "UPDATED", "Proyecto actualizado", { updatedFields: Object.keys(data) });
+    }
+
+    revalidatePath("/proyectos");
+    return { success: true, data: updatedProject };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// ==========================================
+// DELETE (Eliminación)
+// ==========================================
+export async function deleteProject(id: string) {
+  try {
+    const { workspace, role } = await getCurrentWorkspace();
+    if (!hasPermission(role, "ADMIN")) throw new Error("UNAUTHORIZED_ROLE");
+
+    // First ensure the project belongs to the workspace
+    const existing = await prisma.project.findUnique({ where: { id, workspaceId: workspace.id } });
+    if (!existing) throw new Error("NOT_FOUND_OR_UNAUTHORIZED");
+
+    await prisma.project.delete({
+      where: { id },
+    });
+    revalidatePath("/proyectos");
+    return { success: true, message: "Project deleted successfully" };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
