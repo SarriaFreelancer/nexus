@@ -71,6 +71,7 @@ model User {
   auditLogs     AuditLog[]
   projectEvents ProjectEvent[]
   notifications Notification[]
+  preferences   Json?             @default("{}")
 }
 
 model Notification {

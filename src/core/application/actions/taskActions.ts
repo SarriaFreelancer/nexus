@@ -240,3 +240,78 @@ export async function deleteSubtask(subtaskId: string) {
   }
 }
 
+// ==========================================
+// QUICK CHECKLIST ACTIONS
+// ==========================================
+export async function quickCreateTask(projectId: string, title: string) {
+  try {
+    const { workspace, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
+    
+    // Verify project belongs to workspace
+    const project = await prisma.project.findUnique({
+      where: { id: projectId, workspaceId: workspace.id }
+    });
+    if (!project) throw new Error("Project not found");
+
+    const newTask = await prisma.task.create({
+      data: {
+        projectId,
+        title,
+        status: "BACKLOG",
+        priority: "MEDIUM",
+      }
+    });
+
+    await recordProjectEvent(projectId, userId, "TASK_ADDED", `Tarea creada: ${title}`, { taskId: newTask.id });
+    revalidatePath("/proyectos");
+    revalidatePath("/tareas");
+    
+    return { success: true, data: newTask };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function toggleTaskCompletion(taskId: string, isCompleted: boolean) {
+  try {
+    const { workspace, user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
+    
+    // Verify task belongs to a project in the workspace
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: { project: true }
+    });
+    
+    if (!task || task.project.workspaceId !== workspace.id) {
+      throw new Error("Task not found");
+    }
+
+    const newStatus = isCompleted ? "PRODUCTION" : "BACKLOG";
+    const newEndDate = isCompleted ? new Date() : null;
+
+    const updatedTask = await prisma.task.update({
+      where: { id: taskId },
+      data: {
+        status: newStatus,
+        endDate: newEndDate,
+      }
+    });
+
+    await recordProjectEvent(
+      task.projectId, 
+      userId, 
+      "TASK_STATUS", 
+      `Estado de tarea cambiado a ${isCompleted ? 'Completado' : 'Backlog'}`, 
+      { taskId, newStatus }
+    );
+    
+    revalidatePath("/proyectos");
+    revalidatePath("/tareas");
+    
+    return { success: true, data: updatedTask };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

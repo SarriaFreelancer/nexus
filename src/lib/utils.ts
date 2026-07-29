@@ -24,7 +24,9 @@ export function translateProjectStatus(status: string): string {
     "DEVELOPMENT": "En Desarrollo",
     "TESTING": "En Pruebas",
     "DEPLOYMENT": "En Despliegue",
-    "COMPLETED": "Finalizados",
+    "DEPLOYED": "En Producción",
+    "COMPLETED": "Finalizado",
+    "ARCHIVED": "Finalizado",
     "ON_HOLD": "Pausado",
     "CANCELLED": "Cancelado"
   };

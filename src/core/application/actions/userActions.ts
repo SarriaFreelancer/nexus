@@ -109,3 +109,51 @@ export async function createUser(data: { name: string; email: string; role: stri
     return { success: false, error: error.message };
   }
 }
+
+export async function getUserPreferences() {
+  try {
+    const { user } = await getCurrentWorkspace();
+    const dbUser = await prisma.user.findUnique({
+      where: { id: (user as any).id }
+    });
+    
+    if (!dbUser) throw new Error("USER_NOT_FOUND");
+    
+    let prefs = {};
+    if (dbUser.preferences) {
+      prefs = typeof dbUser.preferences === "string" ? JSON.parse(dbUser.preferences) : dbUser.preferences;
+    }
+    
+    return { success: true, data: prefs };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateUserPreference(key: string, value: any) {
+  try {
+    const { user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
+    
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+    if (!dbUser) throw new Error("USER_NOT_FOUND");
+    
+    let prefs: any = {};
+    if (dbUser.preferences) {
+      prefs = typeof dbUser.preferences === "string" ? JSON.parse(dbUser.preferences) : dbUser.preferences;
+    }
+    
+    prefs[key] = value;
+    
+    await prisma.user.update({
+      where: { id: userId },
+      data: { preferences: prefs }
+    });
+    
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

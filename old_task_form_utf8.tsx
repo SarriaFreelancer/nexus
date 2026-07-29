@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import { updateTask, addSubtask, toggleSubtask, deleteSubtask } from "@/core/application/actions/taskActions";
@@ -89,7 +89,7 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Title */}
         <div className="space-y-1.5 md:col-span-2">
-          <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Título de la Tarea</label>
+          <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">T├¡tulo de la Tarea</label>
           <input
             required
             name="title"
@@ -128,7 +128,7 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
             className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
           >
             <option value="BACKLOG">Backlog</option>
-            <option value="IN_DESIGN">Diseño</option>
+            <option value="IN_DESIGN">Dise├▒o</option>
             <option value="IN_DEVELOPMENT">Desarrollo</option>
             <option value="IN_TESTING">Testing / QA</option>
             <option value="PRODUCTION">Deploy & Prod</option>
@@ -165,7 +165,7 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
         {/* Due Date */}
         <div className="space-y-1.5">
           <label className="text-slate-700 dark:text-slate-300 font-medium text-xs flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-indigo-400" /> Fecha Límite
+            <Calendar className="w-3.5 h-3.5 text-indigo-400" /> Fecha L├¡mite
           </label>
           <input
             name="dueDate"
@@ -178,7 +178,7 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
 
       {/* Description */}
       <div className="space-y-1.5">
-        <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Descripción</label>
+        <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Descripci├│n</label>
         <textarea
           name="description"
           defaultValue={task.description || ""}
@@ -191,7 +191,7 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
       <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
         <div className="flex items-center justify-between">
           <label className="text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-indigo-400" /> Checklist / Tareas Internas ({subtasks.filter((st) => st.completed).length} / {subtasks.length})
+            <CheckCircle2 className="w-4 h-4 text-indigo-400" /> Subtareas ({subtasks.filter((st) => st.completed).length} / {subtasks.length})
           </label>
         </div>
 
@@ -201,7 +201,7 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
             type="text"
             value={newSubtaskTitle}
             onChange={(e) => setNewSubtaskTitle(e.target.value)}
-            placeholder="Añadir tarea al checklist..."
+            placeholder="A├▒adir nueva subtarea..."
             className="flex-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -217,14 +217,14 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
             className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1 shrink-0"
           >
             {addingSubtask ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-            Añadir
+            A├▒adir
           </button>
         </div>
 
         {/* Subtasks List */}
         <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
           {subtasks.length === 0 ? (
-            <p className="text-xs text-slate-500 dark:text-slate-400 italic">No hay tareas internas creadas aún.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 italic">No hay subtareas creadas para esta tarea.</p>
           ) : (
             subtasks.map((st) => (
               <div
@@ -265,8 +265,8 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
             <Zap className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Automatización de Despliegue</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">Ejecutar CI/CD automáticamente al mover a "Deploy & Prod"</p>
+            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Automatizaci├│n de Despliegue</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">Ejecutar CI/CD autom├íticamente al mover a "Deploy & Prod"</p>
           </div>
         </div>
         <button

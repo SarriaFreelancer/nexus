@@ -40,6 +40,18 @@ export async function processTaskStatusAutomations(projectId: string, taskId: st
           });
           await recordAuditLog(userId, "AUTOMATION_TRIGGER", `Automatización cambió el estado del proyecto a ${newProjStatus}`, `Proyecto ID: ${projectId}`, { automationId: auto.id });
         }
+      } else if (auto.action === "CHANGE_PROJECT_STATUS_TESTING") {
+        await prisma.project.update({
+          where: { id: projectId },
+          data: { status: "TESTING" }
+        });
+        await recordAuditLog(userId, "AUTOMATION_TRIGGER", `Automatización cambió el estado del proyecto a TESTING`, `Proyecto ID: ${projectId}`, { automationId: auto.id });
+      } else if (auto.action === "CHANGE_PROJECT_STATUS_DEPLOYED") {
+        await prisma.project.update({
+          where: { id: projectId },
+          data: { status: "DEPLOYED" }
+        });
+        await recordAuditLog(userId, "AUTOMATION_TRIGGER", `Automatización cambió el estado del proyecto a DEPLOYED`, `Proyecto ID: ${projectId}`, { automationId: auto.id });
       }
     }
   } catch (error) {

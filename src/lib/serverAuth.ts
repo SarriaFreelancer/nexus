@@ -43,7 +43,8 @@ export async function getCurrentWorkspace() {
   return {
     workspace: membership.workspace,
     role: membership.role,
-    user: user
+    user: user,
+    member: membership
   };
 }
 

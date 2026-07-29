@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import { updateProject } from "@/core/application/actions/projectActions";
@@ -6,9 +6,8 @@ import { getProjectEvents, addProjectComment } from "@/core/application/actions/
 import { 
   MessageSquare, GitCommit, FileText, UserPlus, Clock, Loader2, Send, 
   Info, PieChart as PieChartIcon, Zap, Shield, CheckCircle2, Bot, Filter,
-  Flag, Users, Layers, Activity, FileUp, Pause, CheckSquare, Edit3, Plus
+  Flag, Users, Layers, Activity, FileUp, Pause, CheckSquare, Edit3
 } from "lucide-react";
-import { quickCreateTask, toggleTaskCompletion } from "@/core/application/actions/taskActions";
 
 export function EditProjectForm({ project, onSuccess, onCancel }: { project: any, onSuccess: () => void, onCancel: () => void }) {
   const [loading, setLoading] = useState(false);
@@ -75,35 +74,6 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
 
   const [activeFilter, setActiveFilter] = useState("Todos");
 
-  // Checklist states
-  const [tasks, setTasks] = useState<any[]>(project.tasks || []);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [addingTask, setAddingTask] = useState(false);
-
-  const handleAddTask = async () => {
-    if (!newTaskTitle.trim()) return;
-    setAddingTask(true);
-    const res = await quickCreateTask(project.id, newTaskTitle.trim());
-    if (res.success && res.data) {
-      setTasks([res.data, ...tasks]);
-      setNewTaskTitle("");
-      onSuccess(); // To refresh parent if needed
-    }
-    setAddingTask(false);
-  };
-
-  const handleToggleTask = async (taskId: string, isCompleted: boolean) => {
-    // Optimistic update
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: isCompleted ? "PRODUCTION" : "BACKLOG", endDate: isCompleted ? new Date().toISOString() : null } : t));
-    const res = await toggleTaskCompletion(taskId, isCompleted);
-    if (!res.success) {
-      // Revert if failed
-      setTasks(project.tasks || []);
-    } else {
-      onSuccess();
-    }
-  };
-
   const filteredEvents = events.filter((evt) => {
     if (activeFilter === "Todos") return true;
     if (activeFilter === "Estado") return evt.type === "STATUS_CHANGE";
@@ -134,19 +104,19 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                 <input required name="name" defaultValue={project.name} type="text" className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1a1f35] focus:outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Código (Máx 4 letras)</label>
+                <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">C├│digo (M├íx 4 letras)</label>
                 <input required name="code" defaultValue={project.code} type="text" maxLength={4} className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1a1f35] focus:outline-none uppercase transition-all" />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Descripción</label>
+              <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Descripci├│n</label>
               <textarea name="description" defaultValue={project.description || ""} rows={3} className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1a1f35] focus:outline-none resize-none transition-all"></textarea>
             </div>
 
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Categoría</label>
+                <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Categor├¡a</label>
                 <select name="category" defaultValue={project.category} className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1a1f35] focus:outline-none transition-all">
                   <option value="Web App">Web App</option>
                   <option value="Mobile App">Mobile App</option>
@@ -160,10 +130,10 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                 <div className="relative">
                   <select name="status" defaultValue={project.status} className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 pl-8 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1a1f35] focus:outline-none transition-all appearance-none">
                     <option value="DISCOVERY">Descubrimiento</option>
-                    <option value="DESIGN">En Diseño</option>
+                    <option value="DESIGN">En Dise├▒o</option>
                     <option value="DEVELOPMENT">En Desarrollo</option>
                     <option value="TESTING">En Pruebas</option>
-                    <option value="DEPLOYED">En Producción</option>
+                    <option value="DEPLOYED">En Producci├│n</option>
                     <option value="ARCHIVED">Finalizado</option>
                   </select>
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500"></div>
@@ -195,7 +165,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
 
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Tecnologías (separadas por coma)</label>
+                <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Tecnolog├¡as (separadas por coma)</label>
                 <input name="technologies" defaultValue={currentTechs} type="text" className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1a1f35] focus:outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
@@ -205,77 +175,10 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
             </div>
           </div>
 
-          {/* Checklist Rápidas */}
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800/60 mt-6">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-              <CheckSquare className="w-5 h-5 text-indigo-500" />
-              Checklist de Tareas
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Añade tareas rápidas. Se sincronizarán automáticamente con el Tablero Kanban.</p>
-            
-            <div className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                placeholder="Añadir nueva tarea al proyecto..."
-                className="flex-1 bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none transition-all"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAddTask();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleAddTask}
-                disabled={addingTask || !newTaskTitle.trim()}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 shrink-0 flex items-center gap-1.5"
-              >
-                {addingTask ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                Añadir
-              </button>
-            </div>
-            
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-              {tasks.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">No hay tareas creadas en este proyecto.</p>
-              ) : (
-                tasks.map(t => {
-                  const isCompleted = t.status === "PRODUCTION" || t.status === "COMPLETED";
-                  return (
-                    <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-white dark:bg-[#13182b]/50 border border-slate-200 dark:border-slate-800/60 transition-all hover:border-indigo-500/30">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleTask(t.id, !isCompleted)}
-                        className="shrink-0 transition-colors"
-                      >
-                        {isCompleted ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                        ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-indigo-500 transition-colors"></div>
-                        )}
-                      </button>
-                      <span className={`text-xs font-medium flex-1 ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}>
-                        {t.title}
-                      </span>
-                      {isCompleted && t.endDate && (
-                        <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-semibold shrink-0">
-                          Finalizado el {new Date(t.endDate).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
           {/* Timeline Section */}
-          <div className="pt-8 border-t border-slate-200 dark:border-slate-800/60 mt-8">
+          <div className="pt-4">
             <div className="mb-4">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Línea de Tiempo</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">L├¡nea de Tiempo</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">Historial completo de eventos y cambios del proyecto.</p>
             </div>
 
@@ -326,7 +229,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                 let badgeColor = "bg-slate-500/10 text-slate-400";
                 
                 if (evt.type === "CREATED") {
-                  Icon = Flag; iconColor = "text-indigo-400"; iconBg = "bg-indigo-500/10"; badgeText = "Creación"; badgeColor = "bg-indigo-500/10 text-indigo-400";
+                  Icon = Flag; iconColor = "text-indigo-400"; iconBg = "bg-indigo-500/10"; badgeText = "Creaci├│n"; badgeColor = "bg-indigo-500/10 text-indigo-400";
                 } else if (evt.type === "MEMBER_ADDED" || evt.type === "MEMBER") {
                   Icon = Users; iconColor = "text-emerald-400"; iconBg = "bg-emerald-500/10"; badgeText = "Colaborador"; badgeColor = "bg-emerald-500/10 text-emerald-400";
                 } else if (evt.type === "STATUS_CHANGE") {
@@ -336,7 +239,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                 } else if (evt.type === "TASK_ADDED") {
                   Icon = CheckSquare; iconColor = "text-fuchsia-400"; iconBg = "bg-fuchsia-500/10"; badgeText = "Tarea"; badgeColor = "bg-fuchsia-500/10 text-fuchsia-400";
                 } else if (evt.type === "TASK_UPDATED") {
-                  Icon = Edit3; iconColor = "text-cyan-400"; iconBg = "bg-cyan-500/10"; badgeText = "Edición Tarea"; badgeColor = "bg-cyan-500/10 text-cyan-400";
+                  Icon = Edit3; iconColor = "text-cyan-400"; iconBg = "bg-cyan-500/10"; badgeText = "Edici├│n Tarea"; badgeColor = "bg-cyan-500/10 text-cyan-400";
                 } else if (evt.type === "TASK_STATUS") {
                   Icon = Layers; iconColor = "text-violet-400"; iconBg = "bg-violet-500/10"; badgeText = "Estado Tarea"; badgeColor = "bg-violet-500/10 text-violet-400";
                 }
@@ -366,8 +269,8 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                                   try { details = JSON.parse(details); } catch(e){}
                                 }
                                 if (details && details.before && details.after) {
-                                  const translate = (st: string) => st === "DEVELOPMENT" ? "En Desarrollo" : st === "DESIGN" ? "En Diseño" : st === "TESTING" ? "En Pruebas" : st === "DEPLOYED" ? "En Producción" : st === "ARCHIVED" ? "Finalizado" : st === "DISCOVERY" ? "Descubrimiento" : st;
-                                  return `El estado del proyecto cambió de ${translate(details.before)} a ${translate(details.after)}.`;
+                                  const translate = (st: string) => st === "DEVELOPMENT" ? "En Desarrollo" : st === "DESIGN" ? "En Dise├▒o" : st === "TESTING" ? "En Pruebas" : st === "DEPLOYED" ? "En Producci├│n" : st === "ARCHIVED" ? "Finalizado" : st === "DISCOVERY" ? "Descubrimiento" : st;
+                                  return `El estado del proyecto cambi├│ de ${translate(details.before)} a ${translate(details.after)}.`;
                                 }
                               }
                               return evt.content;
@@ -381,8 +284,8 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                                 <Bot className="w-3.5 h-3.5 text-slate-500" />
                               </div>
                               <div className="flex-1">
-                                <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Automatización ejecutada</p>
-                                <p className="text-[10px] text-slate-500">Se notificó al equipo sobre el cambio de estado.</p>
+                                <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Automatizaci├│n ejecutada</p>
+                                <p className="text-[10px] text-slate-500">Se notific├│ al equipo sobre el cambio de estado.</p>
                               </div>
                               <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-bold">
                                 <CheckCircle2 className="w-3 h-3" /> Completado
@@ -420,17 +323,17 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
         {/* RIGHT COLUMN: Info Cards */}
         <div className="w-[320px] shrink-0 space-y-4">
           
-          {/* Card 1: Información General */}
+          {/* Card 1: Informaci├│n General */}
           <div className="bg-slate-50/50 dark:bg-[#13182b]/80 border border-slate-200 dark:border-slate-800/60 rounded-2xl p-5">
             <h4 className="flex items-center gap-2 text-[13px] font-bold text-slate-800 dark:text-slate-200 mb-4">
               <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400"><Info className="w-4 h-4" /></div>
-              Información General
+              Informaci├│n General
             </h4>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <Clock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[11px] text-slate-500 font-medium">Fecha de creación</p>
+                  <p className="text-[11px] text-slate-500 font-medium">Fecha de creaci├│n</p>
                   <p className="text-[13px] text-slate-700 dark:text-slate-300">{new Date(project.createdAt).toLocaleString()}</p>
                 </div>
               </div>
@@ -444,7 +347,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
               <div className="flex items-start gap-3">
                 <Clock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[11px] text-slate-500 font-medium">Última actualización</p>
+                  <p className="text-[11px] text-slate-500 font-medium">├Ültima actualizaci├│n</p>
                   <p className="text-[13px] text-slate-700 dark:text-slate-300">{new Date(project.updatedAt).toLocaleString()}</p>
                 </div>
               </div>
@@ -511,9 +414,9 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
             
             <div className="space-y-4">
               {[
-                { icon: GitCommit, title: "Al cambiar a Producción", sub: "Crear respaldo automático" },
+                { icon: GitCommit, title: "Al cambiar a Producci├│n", sub: "Crear respaldo autom├ítico" },
                 { icon: MessageSquare, title: "Al cambiar de fase", sub: "Notificar al equipo" },
-                { icon: FileText, title: "Al completar todas las tareas", sub: "Solicitar revisión" },
+                { icon: FileText, title: "Al completar todas las tareas", sub: "Solicitar revisi├│n" },
                 { icon: UserPlus, title: "Al cambiar estado a En Pausa", sub: "Asignar responsable" },
               ].map((auto, i) => (
                 <div key={i} className="flex items-center gap-3">
@@ -530,12 +433,12 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
             </div>
           </div>
 
-          {/* Card 4: Auditoría */}
+          {/* Card 4: Auditor├¡a */}
           <div className="bg-slate-50/50 dark:bg-[#13182b]/80 border border-slate-200 dark:border-slate-800/60 rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
               <h4 className="flex items-center gap-2 text-[13px] font-bold text-slate-800 dark:text-slate-200">
                 <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400"><Shield className="w-4 h-4" /></div>
-                Auditoría
+                Auditor├¡a
               </h4>
               <span className="text-[11px] text-indigo-500 hover:underline cursor-pointer font-medium">Ver todos</span>
             </div>

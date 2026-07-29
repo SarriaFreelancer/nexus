@@ -16,7 +16,7 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({ users, limit = 3 }) =>
         <img
           key={user.id}
           className="inline-block h-6 w-6 rounded-full ring-2 ring-slate-900 object-cover"
-          src={user.avatarUrl}
+          src={user.avatarUrl || `https://i.pravatar.cc/150?u=${encodeURIComponent(user.name)}`}
           alt={user.name}
           title={user.name}
         />

@@ -18,6 +18,7 @@ export async function getProjects() {
       include: {
         client: true,
         tasks: true,
+        versions: { where: { isCurrent: true } }
       },
       orderBy: { createdAt: "desc" },
     });
@@ -54,7 +55,9 @@ export async function createProject(data: {
   technologies: any; // JSON
   estimatedHours?: number;
   bannerUrl?: string;
+  bannerUrl?: string;
   status?: any;
+  initialTasks?: string[]; // Titles of initial tasks
 }) {
   try {
     const { workspace, role, user } = await getCurrentWorkspace();
@@ -63,10 +66,29 @@ export async function createProject(data: {
 
     const newProject = await prisma.project.create({
       data: {
-        ...data,
+        name: data.name,
+        code: data.code,
+        description: data.description,
+        category: data.category,
+        clientId: data.clientId,
+        technologies: data.technologies,
+        estimatedHours: data.estimatedHours,
+        bannerUrl: data.bannerUrl,
+        status: data.status,
         workspaceId: workspace.id,
       },
     });
+
+    if (data.initialTasks && data.initialTasks.length > 0) {
+      await prisma.task.createMany({
+        data: data.initialTasks.map((title) => ({
+          projectId: newProject.id,
+          title,
+          status: "BACKLOG",
+          priority: "MEDIUM",
+        })),
+      });
+    }
 
     await recordProjectEvent(newProject.id, userId, "CREATED", "Proyecto creado", { status: newProject.status });
     await recordAuditLog(userId, "CREATE_PROJECT", "Creó un proyecto", `Proyecto: ${newProject.name}`, { after: { name: newProject.name, status: newProject.status } });

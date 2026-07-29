@@ -14,7 +14,7 @@ export async function getDashboardMetrics() {
       where: {
         workspaceId: workspace.id,
         status: {
-          in: ["DEVELOPMENT", "DESIGN", "TESTING", "DEPLOYED"]
+          notIn: ["PAUSED", "COMPLETED", "ARCHIVED"]
         }
       }
     });

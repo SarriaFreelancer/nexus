@@ -6,6 +6,7 @@ import { mockCurrentUser } from "@/core/infrastructure/mockData";
 import { CommandPalette } from "./CommandPalette";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
+import { CalendarWidget } from "./CalendarWidget";
 
 export const Navbar: React.FC = () => {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
@@ -50,9 +51,7 @@ export const Navbar: React.FC = () => {
           <NotificationBell />
 
           {/* Calendar Quick Action */}
-          <button className="h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-all">
-            <Calendar className="h-4 w-4" />
-          </button>
+          <CalendarWidget />
 
           {/* User Profile Avatar */}
           <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800/80">
