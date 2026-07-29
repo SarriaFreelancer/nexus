@@ -151,9 +151,9 @@ export default function ProyectosPage() {
         </div>
 
         {/* Bottom Header: Filters and Toggles */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mt-4">
+        <div className="flex flex-col gap-4 mt-4">
           {/* Left: Status Filters */}
-          <div className="flex overflow-x-auto pb-2 gap-2 flex-nowrap custom-scrollbar shrink-0 w-full xl:w-auto">
+          <div className="flex overflow-x-auto pb-2 gap-2 flex-nowrap custom-scrollbar shrink-0 w-full">
             {["Todos", "Descubrimiento", "En Diseño", "En Desarrollo", "En Pruebas", "En Producción", "Mantenimiento", "En Pausa", "Completado", "Finalizado"].map((st) => (
               <button
                 key={st}
@@ -170,7 +170,7 @@ export default function ProyectosPage() {
           </div>
 
           {/* Right: View Toggles & Dropdowns & Actions */}
-          <div className="flex items-center gap-4 w-full xl:w-auto justify-end">
+          <div className="flex items-center gap-4 w-full justify-start md:justify-end">
           <div className="flex items-center gap-4 rounded-xl p-1 bg-[#0f1424] border border-slate-800/80">
             <div className="flex items-center p-1 bg-[#161b2c] rounded-lg">
             <button 

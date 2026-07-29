@@ -6,7 +6,7 @@ import { getProjectEvents, addProjectComment } from "@/core/application/actions/
 import { 
   MessageSquare, GitCommit, FileText, UserPlus, Clock, Loader2, Send, 
   Info, PieChart as PieChartIcon, Zap, Shield, CheckCircle2, Bot, Filter,
-  Flag, Users, Layers, Activity, FileUp, Pause, CheckSquare, Edit3, Plus
+  Flag, Users, Layers, Activity, FileUp, Pause, CheckSquare, Edit3, Plus, X, Link as LinkIcon, Trash2, Github, Globe, ChevronDown
 } from "lucide-react";
 import { quickCreateTask, toggleTaskCompletion } from "@/core/application/actions/taskActions";
 
@@ -15,12 +15,18 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
   const [error, setError] = useState("");
   const [events, setEvents] = useState<any[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [newComment, setNewComment] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
 
-  useEffect(() => {
+  const fetchEvents = () => {
     getProjectEvents(project.id).then(res => {
       if (res.success && res.data) setEvents(res.data);
       setLoadingEvents(false);
     });
+  };
+
+  useEffect(() => {
+    fetchEvents();
   }, [project.id]);
 
   const PRESET_BANNERS = [
@@ -51,6 +57,8 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
       estimatedHours: Number(formData.get("estimatedHours")),
       status: formData.get("status") as string,
       bannerUrl: bannerToSave || null,
+      startDate: formData.get("startDate") ? new Date(formData.get("startDate") as string) : null,
+      endDate: formData.get("endDate") ? new Date(formData.get("endDate") as string) : null,
     };
 
     try {
@@ -116,6 +124,24 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
   const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   const translateProjectStatus = (st: string) => st === "DEVELOPMENT" ? "En Desarrollo" : st === "DESIGN" ? "En Diseño" : st === "TESTING" ? "En Pruebas" : st === "DEPLOYED" ? "En Producción" : st === "COMPLETED" ? "Completado" : st === "ARCHIVED" ? "Finalizado" : st === "DISCOVERY" ? "Descubrimiento" : st === "PAUSED" ? "En Pausa" : st === "MAINTENANCE" ? "Mantenimiento" : st;
   const projectPhase = translateProjectStatus(project.status);
+
+  const totalComments = events.filter(e => e.type === "COMMENT").length;
+  const totalChanges = events.length - totalComments;
+  const totalVersions = project.versions?.length || 0;
+  const totalDocs = project.docs?.length || 0;
+
+  const handleCommentSubmit = async () => {
+    if (!newComment.trim()) return;
+    setSubmittingComment(true);
+    const res = await addProjectComment(project.id, newComment.trim());
+    if (res.success) {
+      setNewComment("");
+      fetchEvents();
+    } else {
+      alert("Error al agregar comentario: " + res.error);
+    }
+    setSubmittingComment(false);
+  };
 
   const filteredEvents = events.filter((evt) => {
     if (activeFilter === "Todos") return true;
@@ -207,6 +233,17 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                 onChange={(e) => { setCustomBanner(e.target.value); setSelectedBanner(""); }}
                 className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1a1f35] focus:outline-none transition-all text-xs" 
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Fecha de Inicio</label>
+                <input name="startDate" defaultValue={project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : ''} type="date" className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1a1f35] focus:outline-none transition-all" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Fecha de Finalización</label>
+                <input name="endDate" defaultValue={project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ''} type="date" className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1a1f35] focus:outline-none transition-all" />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-5">
@@ -342,6 +379,37 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
               <button type="button" className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#13182b] text-slate-400 hover:text-indigo-500 hover:bg-indigo-500/10 ml-auto border border-slate-200 dark:border-slate-800/60 transition-colors">
                 <Filter className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Nuevo Comentario */}
+            <div className="flex items-start gap-3 mb-8 bg-slate-50 dark:bg-[#13182b] p-3 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-sm focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
+              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
+                <MessageSquare className="w-4 h-4 text-indigo-500" />
+              </div>
+              <div className="flex-1 flex flex-col gap-2">
+                <textarea 
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Añadir un comentario a la línea de tiempo..."
+                  className="w-full bg-transparent border-none focus:ring-0 text-[13px] text-slate-700 dark:text-slate-300 resize-none min-h-[40px] py-1 px-0"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleCommentSubmit();
+                    }
+                  }}
+                ></textarea>
+                <div className="flex justify-end">
+                  <button 
+                    type="button"
+                    onClick={handleCommentSubmit}
+                    disabled={!newComment.trim() || submittingComment}
+                    className="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg transition-colors flex items-center gap-2 text-[11px] font-bold"
+                  >
+                    {submittingComment ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Send className="w-3.5 h-3.5" /> Comentar</>}
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Timeline Events */}
@@ -574,10 +642,10 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
             
             <div className="space-y-3">
               {[
-                { label: "Cambios realizados", val: 23 },
-                { label: "Comentarios", val: 14 },
-                { label: "Archivos adjuntos", val: 9 },
-                { label: "Historial de versiones", val: 5 },
+                { label: "Cambios realizados", val: totalChanges },
+                { label: "Comentarios", val: totalComments },
+                { label: "Archivos adjuntos", val: totalDocs },
+                { label: "Historial de versiones", val: totalVersions },
               ].map((stat, i) => (
                 <div key={i} className="flex justify-between items-center text-[12px]">
                   <span className="text-slate-500">{stat.label}</span>
