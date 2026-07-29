@@ -110,6 +110,12 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
     }
   };
 
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter(t => t.status === "PRODUCTION" || t.status === "MAINTENANCE").length;
+  const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const translateProjectStatus = (st: string) => st === "DEVELOPMENT" ? "En Desarrollo" : st === "DESIGN" ? "En Diseño" : st === "TESTING" ? "En Pruebas" : st === "DEPLOYED" ? "En Producción" : st === "ARCHIVED" ? "Finalizado" : st === "DISCOVERY" ? "Descubrimiento" : st;
+  const projectPhase = translateProjectStatus(project.status);
+
   const filteredEvents = events.filter((evt) => {
     if (activeFilter === "Todos") return true;
     if (activeFilter === "Estado") return evt.type === "STATUS_CHANGE";
@@ -484,26 +490,25 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
             <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] text-slate-500">Fase Actual</span>
-                <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-md text-[11px] font-bold">Pruebas</span>
+                <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-md text-[11px] font-bold">{projectPhase}</span>
               </div>
               
               <div>
                 <div className="flex justify-between text-[12px] mb-1.5">
                   <span className="text-slate-500">Progreso General</span>
-                  <span className="text-slate-700 dark:text-slate-300 font-bold">68%</span>
+                  <span className="text-slate-700 dark:text-slate-300 font-bold">{progressPercent}%</span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-500 w-[68%] rounded-full"></div>
+                  <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${progressPercent}%` }}></div>
                 </div>
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800/60">
                 <span className="text-[12px] text-slate-500">Colaboradores</span>
                 <div className="flex items-center">
-                  <span className="text-[13px] text-slate-700 dark:text-slate-300 font-bold mr-2">6</span>
+                  <span className="text-[13px] text-slate-700 dark:text-slate-300 font-bold mr-2">1</span>
                   <div className="flex -space-x-2">
-                    {[1,2,3].map(i => <img key={i} src={`https://i.pravatar.cc/150?u=${i}`} className="w-6 h-6 rounded-full border-2 border-white dark:border-[#13182b]" />)}
-                    <div className="w-6 h-6 rounded-full bg-indigo-600 border-2 border-white dark:border-[#13182b] flex items-center justify-center text-[10px] text-white font-bold">+2</div>
+                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent('David Sarria')}&background=random`} className="w-6 h-6 rounded-full border-2 border-white dark:border-[#13182b]" />
                   </div>
                 </div>
               </div>
@@ -511,10 +516,10 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
               <div>
                 <div className="flex justify-between text-[12px] mb-1.5">
                   <span className="text-slate-500">Tareas Completadas</span>
-                  <span className="text-slate-700 dark:text-slate-300 font-bold">18 / 26</span>
+                  <span className="text-slate-700 dark:text-slate-300 font-bold">{completedTasks} / {totalTasks}</span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 w-[70%] rounded-full"></div>
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${progressPercent}%` }}></div>
                 </div>
               </div>
             </div>

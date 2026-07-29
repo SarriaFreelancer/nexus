@@ -107,6 +107,7 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
           <select
             required
             name="projectId"
+            key={projects.length}
             defaultValue={task.projectId}
             className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
           >
