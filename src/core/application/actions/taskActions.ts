@@ -243,7 +243,7 @@ export async function deleteSubtask(subtaskId: string) {
 // ==========================================
 // QUICK CHECKLIST ACTIONS
 // ==========================================
-export async function quickCreateTask(projectId: string, title: string) {
+export async function quickCreateTask(projectId: string, title: string, status?: string) {
   try {
     const { workspace, user } = await getCurrentWorkspace();
     const userId = (user as any).id;
@@ -258,7 +258,7 @@ export async function quickCreateTask(projectId: string, title: string) {
       data: {
         projectId,
         title,
-        status: "BACKLOG",
+        status: status || "BACKLOG",
         priority: "MEDIUM",
       }
     });
@@ -289,13 +289,10 @@ export async function toggleTaskCompletion(taskId: string, isCompleted: boolean)
     }
 
     const newStatus = isCompleted ? "PRODUCTION" : "BACKLOG";
-    const newEndDate = isCompleted ? new Date() : null;
-
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: {
-        status: newStatus,
-        endDate: newEndDate,
+        status: newStatus
       }
     });
 

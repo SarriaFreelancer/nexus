@@ -106,11 +106,25 @@ export default function ProyectosPage() {
         {editProject && (
           <EditProjectForm 
             project={editProject}
+            onSuccess={async (shouldClose = true) => {
+              if (shouldClose) {
+                setEditProject(null);
+                await fetchProjectsAndPrefs();
+              } else {
+                // If not closing, fetch fresh data and update both dbProjects and editProject
+                const [projRes] = await Promise.all([
+                  getProjects()
+                ]);
+                if (projRes.success && projRes.data) {
+                  setDbProjects(projRes.data);
+                  const updatedProject = projRes.data.find((p: any) => p.id === editProject.id);
+                  if (updatedProject) {
+                    setEditProject(updatedProject);
+                  }
+                }
+              }
+            }}
             onCancel={() => setEditProject(null)} 
-            onSuccess={() => {
-              setEditProject(null);
-              fetchProjectsAndPrefs();
-            }} 
           />
         )}
       </Modal>

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { quickCreateTask, toggleTaskCompletion } from "@/core/application/actions/taskActions";
 
-export function EditProjectForm({ project, onSuccess, onCancel }: { project: any, onSuccess: () => void, onCancel: () => void }) {
+export function EditProjectForm({ project, onSuccess, onCancel }: { project: any, onSuccess: (shouldClose?: boolean) => void, onCancel: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [events, setEvents] = useState<any[]>([]);
@@ -78,29 +78,35 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
   // Checklist states
   const [tasks, setTasks] = useState<any[]>(project.tasks || []);
   const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskStatus, setNewTaskStatus] = useState("BACKLOG");
   const [addingTask, setAddingTask] = useState(false);
 
   const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;
     setAddingTask(true);
-    const res = await quickCreateTask(project.id, newTaskTitle.trim());
+    const res = await quickCreateTask(project.id, newTaskTitle.trim(), newTaskStatus);
     if (res.success && res.data) {
       setTasks([res.data, ...tasks]);
       setNewTaskTitle("");
-      onSuccess(); // To refresh parent if needed
+      onSuccess(false); // Refresh parent without closing modal
     }
     setAddingTask(false);
   };
 
   const handleToggleTask = async (taskId: string, isCompleted: boolean) => {
+    // Save current state
+    const previousTasks = [...tasks];
+    
     // Optimistic update
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: isCompleted ? "PRODUCTION" : "BACKLOG", endDate: isCompleted ? new Date().toISOString() : null } : t));
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: isCompleted ? "PRODUCTION" : "BACKLOG", updatedAt: isCompleted ? new Date().toISOString() : t.updatedAt } : t));
+    
     const res = await toggleTaskCompletion(taskId, isCompleted);
     if (!res.success) {
       // Revert if failed
-      setTasks(project.tasks || []);
+      setTasks(previousTasks);
+      alert("Error al marcar tarea: " + res.error);
     } else {
-      onSuccess();
+      onSuccess(false); // Refresh parent without closing modal
     }
   };
 
@@ -213,29 +219,46 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Añade tareas rápidas. Se sincronizarán automáticamente con el Tablero Kanban.</p>
             
-            <div className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                placeholder="Añadir nueva tarea al proyecto..."
-                className="flex-1 bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none transition-all"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAddTask();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleAddTask}
-                disabled={addingTask || !newTaskTitle.trim()}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 shrink-0 flex items-center gap-1.5"
-              >
-                {addingTask ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                Añadir
-              </button>
+            <div className="flex flex-col gap-2 mb-4">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  placeholder="Añadir nueva tarea al proyecto..."
+                  className="flex-1 bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none transition-all"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddTask();
+                    }
+                  }}
+                />
+                <select
+                  value={newTaskStatus}
+                  onChange={(e) => setNewTaskStatus(e.target.value)}
+                  className="w-[140px] bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-2 py-2 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none transition-all cursor-pointer"
+                >
+                  <option value="IDEAS">Ideas</option>
+                  <option value="BACKLOG">Backlog</option>
+                  <option value="TODO">To Do</option>
+                  <option value="IN_ANALYSIS">En Análisis</option>
+                  <option value="IN_DESIGN">En Diseño</option>
+                  <option value="IN_DEVELOPMENT">En Desarrollo</option>
+                  <option value="IN_TESTING">En Pruebas</option>
+                  <option value="DEPLOYING">En Despliegue</option>
+                  <option value="PRODUCTION">Producción</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={handleAddTask}
+                  disabled={addingTask || !newTaskTitle.trim()}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 shrink-0 flex items-center gap-1.5"
+                >
+                  {addingTask ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                  Añadir
+                </button>
+              </div>
             </div>
             
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -260,9 +283,9 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                       <span className={`text-xs font-medium flex-1 ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}>
                         {t.title}
                       </span>
-                      {isCompleted && t.endDate && (
+                      {isCompleted && t.updatedAt && (
                         <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-semibold shrink-0">
-                          Finalizado el {new Date(t.endDate).toLocaleDateString()}
+                          Finalizado el {new Date(t.updatedAt).toLocaleDateString()}
                         </span>
                       )}
                     </div>
