@@ -223,7 +223,7 @@ export default function ProyectosPage() {
               
               let progress = 0;
               if (proj.tasks && proj.tasks.length > 0) {
-                const completed = proj.tasks.filter((t: any) => t.status === "DEPLOYING" || t.status === "PRODUCTION").length;
+                const completed = proj.tasks.filter((t: any) => t.status === "DEPLOYED" || t.status === "COMPLETED").length;
                 progress = Math.round((completed / proj.tasks.length) * 100);
               }
 
@@ -236,7 +236,7 @@ export default function ProyectosPage() {
               }
 
               const totalTasks = proj.tasks ? proj.tasks.length : 0;
-              const completedTasks = proj.tasks ? proj.tasks.filter((t: any) => t.status === "DEPLOYING" || t.status === "PRODUCTION" || t.status === "MAINTENANCE").length : 0;
+              const completedTasks = proj.tasks ? proj.tasks.filter((t: any) => t.status === "DEPLOYED" || t.status === "COMPLETED" || t.status === "MAINTENANCE").length : 0;
               const startDateStr = new Date(proj.startDate || proj.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
               const endDateStr = proj.endDate ? new Date(proj.endDate).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : "--";
               
@@ -392,7 +392,7 @@ export default function ProyectosPage() {
             {paginatedProjects.map((proj: any) => {
               const translatedStatus = translateProjectStatus(proj.status);
               const totalTasks = proj.tasks ? proj.tasks.length : 0;
-              const completedTasks = proj.tasks ? proj.tasks.filter((t: any) => t.status === "DEPLOYING" || t.status === "PRODUCTION").length : 0;
+              const completedTasks = proj.tasks ? proj.tasks.filter((t: any) => t.status === "DEPLOYED" || t.status === "COMPLETED").length : 0;
               const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
               const startDateStr = new Date(proj.startDate || proj.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
               const endDateStr = proj.endDate ? new Date(proj.endDate).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : "--";

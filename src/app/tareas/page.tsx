@@ -47,11 +47,15 @@ function DroppableColumn({ id, children, className }: { id: string, children: Re
 
 export default function TareasPage() {
   const columns = [
-    { status: "BACKLOG", title: "Backlog", color: "border-slate-300 dark:border-slate-700" },
+    { status: "DISCOVERY", title: "Descubrimiento", color: "border-purple-500" },
     { status: "DESIGN", title: "Diseño UI/UX", color: "border-blue-500" },
     { status: "DEVELOPMENT", title: "En Desarrollo", color: "border-indigo-500" },
-    { status: "TESTING", title: "Testing / QA", color: "border-emerald-500" },
-    { status: "PRODUCTION", title: "Deploy & Prod", color: "border-amber-500" },
+    { status: "TESTING", title: "Testing / QA", color: "border-cyan-500" },
+    { status: "DEPLOYED", title: "Desplegado", color: "border-emerald-500" },
+    { status: "MAINTENANCE", title: "Mantenimiento", color: "border-amber-500" },
+    { status: "PAUSED", title: "En Pausa", color: "border-orange-500" },
+    { status: "COMPLETED", title: "Completado", color: "border-green-500" },
+    { status: "ARCHIVED", title: "Archivado", color: "border-slate-500" },
   ];
 
   const [tasks, setTasks] = useState<any[]>([]);
@@ -102,13 +106,7 @@ export default function TareasPage() {
     const newStatusId = over.id; // column id
     const task = tasks.find(t => t.id === taskId);
     
-    // Status mapping based on column
-    let targetStatus = "BACKLOG";
-    if (newStatusId === "BACKLOG") targetStatus = "BACKLOG";
-    if (newStatusId === "DESIGN") targetStatus = "IN_DESIGN";
-    if (newStatusId === "DEVELOPMENT") targetStatus = "IN_DEVELOPMENT";
-    if (newStatusId === "TESTING") targetStatus = "IN_TESTING";
-    if (newStatusId === "PRODUCTION") targetStatus = "PRODUCTION";
+    const targetStatus = newStatusId;
 
     if (task && task.status !== targetStatus) {
       // Optimistic update
@@ -203,24 +201,15 @@ export default function TareasPage() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 overflow-x-auto min-h-[650px]">
+        <div className="flex gap-4 overflow-x-auto min-h-[650px] pb-4 snap-x">
           {columns.map((col) => {
-            const colTasks = tasks.filter(
-              (t) => {
-                if (col.status === "BACKLOG") return ["IDEAS", "BACKLOG", "TODO"].includes(t.status);
-                if (col.status === "DESIGN") return ["IN_ANALYSIS", "IN_DESIGN"].includes(t.status);
-                if (col.status === "DEVELOPMENT") return t.status === "IN_DEVELOPMENT";
-                if (col.status === "TESTING") return t.status === "IN_TESTING";
-                if (col.status === "PRODUCTION") return ["DEPLOYING", "PRODUCTION", "MAINTENANCE"].includes(t.status);
-                return false;
-              }
-            );
+            const colTasks = tasks.filter((t) => t.status === col.status);
 
             return (
               <DroppableColumn
                 key={col.status}
                 id={col.status}
-                className="bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-3.5 flex flex-col h-full shadow-lg"
+                className="bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-3.5 flex flex-col h-full shadow-lg min-w-[280px] max-w-[320px] shrink-0 snap-start"
               >
                 {/* Column Header */}
                 <div className="space-y-3 mb-3 shrink-0">

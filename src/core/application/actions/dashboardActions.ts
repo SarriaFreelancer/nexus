@@ -27,7 +27,7 @@ export async function getDashboardMetrics() {
       where: {
         project: { workspaceId: workspace.id },
         status: {
-          in: ["DEPLOYING", "PRODUCTION"]
+          in: ["DEPLOYED", "COMPLETED"]
         }
       }
     });
@@ -91,7 +91,7 @@ export async function getDashboardData() {
         take: 4,
         where: {
           project: { workspaceId: workspace.id },
-          status: { notIn: ["PRODUCTION", "ARCHIVED"] }
+          status: { notIn: ["COMPLETED", "ARCHIVED"] }
         },
         orderBy: [
           { priority: "desc" },
@@ -219,7 +219,7 @@ export async function getWeeklyProductivity() {
     const completedTasks = await prisma.task.findMany({
       where: {
         project: { workspaceId: workspace.id },
-        status: "PRODUCTION",
+        status: { in: ["DEPLOYED", "COMPLETED"] },
         updatedAt: {
           gte: startDate,
           lte: endDate,

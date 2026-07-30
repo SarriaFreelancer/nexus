@@ -86,7 +86,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
   // Checklist states
   const [tasks, setTasks] = useState<any[]>(project.tasks || []);
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskStatus, setNewTaskStatus] = useState("BACKLOG");
+  const [newTaskStatus, setNewTaskStatus] = useState("DEVELOPMENT");
   const [addingTask, setAddingTask] = useState(false);
 
   const handleAddTask = async () => {
@@ -106,7 +106,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
     const previousTasks = [...tasks];
     
     // Optimistic update
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: isCompleted ? "PRODUCTION" : "BACKLOG", updatedAt: isCompleted ? new Date().toISOString() : t.updatedAt } : t));
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: isCompleted ? "COMPLETED" : "DISCOVERY", updatedAt: isCompleted ? new Date().toISOString() : t.updatedAt } : t));
     
     const res = await toggleTaskCompletion(taskId, isCompleted);
     if (!res.success) {
@@ -120,7 +120,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
   };
 
   const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(t => t.status === "PRODUCTION" || t.status === "MAINTENANCE").length;
+  const completedTasks = tasks.filter(t => t.status === "COMPLETED" || t.status === "DEPLOYED").length;
   const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   const translateProjectStatus = (st: string) => st === "DEVELOPMENT" ? "En Desarrollo" : st === "DESIGN" ? "En Diseño" : st === "TESTING" ? "En Pruebas" : st === "DEPLOYED" ? "En Producción" : st === "COMPLETED" ? "Completado" : st === "ARCHIVED" ? "Finalizado" : st === "DISCOVERY" ? "Descubrimiento" : st === "PAUSED" ? "En Pausa" : st === "MAINTENANCE" ? "Mantenimiento" : st;
   const projectPhase = translateProjectStatus(project.status);
@@ -284,17 +284,17 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                 <select
                   value={newTaskStatus}
                   onChange={(e) => setNewTaskStatus(e.target.value)}
-                  className="w-[140px] bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-2 py-2 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none transition-all cursor-pointer"
+                  className="w-[150px] bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-2 py-2 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none transition-all cursor-pointer"
                 >
-                  <option value="IDEAS">Ideas</option>
-                  <option value="BACKLOG">Backlog</option>
-                  <option value="TODO">To Do</option>
-                  <option value="IN_ANALYSIS">En Análisis</option>
-                  <option value="IN_DESIGN">En Diseño</option>
-                  <option value="IN_DEVELOPMENT">En Desarrollo</option>
-                  <option value="IN_TESTING">En Pruebas</option>
-                  <option value="DEPLOYING">En Despliegue</option>
-                  <option value="PRODUCTION">Producción</option>
+                  <option value="DISCOVERY">Descubrimiento</option>
+                  <option value="DESIGN">En Diseño</option>
+                  <option value="DEVELOPMENT">En Desarrollo</option>
+                  <option value="TESTING">En Pruebas</option>
+                  <option value="DEPLOYED">Desplegado</option>
+                  <option value="MAINTENANCE">Mantenimiento</option>
+                  <option value="PAUSED">En Pausa</option>
+                  <option value="COMPLETED">Completado</option>
+                  <option value="ARCHIVED">Archivado</option>
                 </select>
                 <button
                   type="button"
@@ -308,33 +308,58 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
               </div>
             </div>
             
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+            <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
               {tasks.length === 0 ? (
                 <p className="text-xs text-slate-500 italic">No hay tareas creadas en este proyecto.</p>
               ) : (
-                tasks.map(t => {
-                  const isCompleted = t.status === "PRODUCTION" || t.status === "COMPLETED";
+                [
+                  { id: "DISCOVERY", label: "Descubrimiento", color: "text-purple-400 border-purple-500/30 bg-purple-500/10" },
+                  { id: "DESIGN", label: "En Diseño", color: "text-blue-400 border-blue-500/30 bg-blue-500/10" },
+                  { id: "DEVELOPMENT", label: "En Desarrollo", color: "text-indigo-400 border-indigo-500/30 bg-indigo-500/10" },
+                  { id: "TESTING", label: "En Pruebas", color: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10" },
+                  { id: "DEPLOYED", label: "Desplegado", color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10" },
+                  { id: "MAINTENANCE", label: "Mantenimiento", color: "text-amber-400 border-amber-500/30 bg-amber-500/10" },
+                  { id: "PAUSED", label: "En Pausa", color: "text-orange-400 border-orange-500/30 bg-orange-500/10" },
+                  { id: "COMPLETED", label: "Completado", color: "text-green-400 border-green-500/30 bg-green-500/10" },
+                  { id: "ARCHIVED", label: "Archivado", color: "text-slate-400 border-slate-500/30 bg-slate-500/10" },
+                ].map(group => {
+                  const groupTasks = tasks.filter(t => t.status === group.id);
+                  if (groupTasks.length === 0) return null;
                   return (
-                    <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-white dark:bg-[#13182b]/50 border border-slate-200 dark:border-slate-800/60 transition-all hover:border-indigo-500/30">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleTask(t.id, !isCompleted)}
-                        className="shrink-0 transition-colors"
-                      >
-                        {isCompleted ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                        ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-indigo-500 transition-colors"></div>
-                        )}
-                      </button>
-                      <span className={`text-xs font-medium flex-1 ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}>
-                        {t.title}
-                      </span>
-                      {isCompleted && t.updatedAt && (
-                        <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-semibold shrink-0">
-                          Finalizado el {new Date(t.updatedAt).toLocaleDateString()}
+                    <div key={group.id} className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${group.color}`}>
+                          {group.label} ({groupTasks.length})
                         </span>
-                      )}
+                      </div>
+                      <div className="space-y-1.5 pl-1">
+                        {groupTasks.map(t => {
+                          const isCompleted = t.status === "COMPLETED" || t.status === "DEPLOYED";
+                          return (
+                            <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-white dark:bg-[#13182b]/50 border border-slate-200 dark:border-slate-800/60 transition-all hover:border-indigo-500/30">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleTask(t.id, !isCompleted)}
+                                className="shrink-0 transition-colors"
+                              >
+                                {isCompleted ? (
+                                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                                ) : (
+                                  <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-indigo-500 transition-colors"></div>
+                                )}
+                              </button>
+                              <span className={`text-xs font-medium flex-1 ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}>
+                                {t.title}
+                              </span>
+                              {isCompleted && t.updatedAt && (
+                                <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-semibold shrink-0">
+                                  Finalizado el {new Date(t.updatedAt).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })

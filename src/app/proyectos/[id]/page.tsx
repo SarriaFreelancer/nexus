@@ -52,7 +52,7 @@ export default function ProjectDetail() {
   
   let progress = 0;
   if (project.tasks && project.tasks.length > 0) {
-    const completed = project.tasks.filter((t: any) => t.status === "DEPLOYING" || t.status === "PRODUCTION").length;
+    const completed = project.tasks.filter((t: any) => t.status === "DEPLOYED" || t.status === "COMPLETED").length;
     progress = Math.round((completed / project.tasks.length) * 100);
   }
 

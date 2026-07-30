@@ -70,36 +70,53 @@ export async function seedTestData() {
     const insertedClients = await prisma.client.findMany({ where: { workspaceId: workspace.id }});
 
     // 4. Crear Proyectos
-    const projectsData = mockProjects.map((p, i) => ({
-      workspaceId: workspace.id,
-      clientId: insertedClients[i % insertedClients.length]?.id,
-      name: p.name,
-      code: p.code,
-      description: "Proyecto generado automáticamente",
-      status: "DEVELOPMENT" as any,
-      priority: "MEDIUM" as any,
-      category: p.category,
-      technologies: JSON.stringify(p.technologies),
-      estimatedHours: p.hoursEstimated,
-      actualHours: p.hoursReal,
-      startDate: new Date(),
-    }));
+    const projectStatuses = ["DISCOVERY", "DESIGN", "DEVELOPMENT", "TESTING", "DEPLOYED", "MAINTENANCE", "PAUSED", "COMPLETED", "ARCHIVED"];
+    const projectsData = mockProjects.map((p, i) => {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - (i + 1) * 14);
+      
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 35 + (i * 12));
+
+      return {
+        workspaceId: workspace.id,
+        clientId: insertedClients[i % insertedClients.length]?.id,
+        name: p.name,
+        code: p.code,
+        description: "Proyecto generado automáticamente con datos reales",
+        status: (projectStatuses[i % projectStatuses.length]) as any,
+        priority: (i % 2 === 0 ? "HIGH" : "MEDIUM") as any,
+        category: p.category,
+        technologies: JSON.stringify(p.technologies),
+        estimatedHours: p.hoursEstimated || 80,
+        actualHours: p.hoursReal || 45,
+        startDate: startDate,
+        endDate: endDate,
+      };
+    });
     await prisma.project.createMany({ data: projectsData });
     const insertedProjects = await prisma.project.findMany({ where: { workspaceId: workspace.id }});
 
     // 5. Crear Tareas
+    const taskStatuses = ["DISCOVERY", "DESIGN", "DEVELOPMENT", "TESTING", "DEPLOYED", "MAINTENANCE", "PAUSED", "COMPLETED", "ARCHIVED"];
     const tasksData = mockNextTasks.map((t, i) => {
       const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + (i + 1) * 2);
+      futureDate.setDate(futureDate.getDate() + (i + 1) * 3);
+      
+      const status = taskStatuses[i % taskStatuses.length];
+      const isFinished = ["COMPLETED", "DEPLOYED", "ARCHIVED"].includes(status);
+      const endDate = isFinished ? new Date() : null;
+
       return {
         projectId: insertedProjects[i % insertedProjects.length]?.id,
         title: t.title,
-        description: "Descripción de la tarea",
-        status: "TODO" as any,
-        priority: "MEDIUM" as any,
-        estimatedHs: 10,
-        loggedHs: 0,
+        description: "Descripción detallada de la tarea",
+        status: status as any,
+        priority: (i % 3 === 0 ? "URGENT" : i % 2 === 0 ? "HIGH" : "MEDIUM") as any,
+        estimatedHs: 10 + i * 2,
+        loggedHs: isFinished ? 10 + i * 2 : 4,
         dueDate: futureDate,
+        endDate: endDate,
       };
     });
     await prisma.task.createMany({ data: tasksData });
@@ -137,7 +154,7 @@ export async function seedTestData() {
             await prisma.task.update({
               where: { id: taskToUpdate.id },
               data: {
-                status: "PRODUCTION",
+                status: "COMPLETED",
                 updatedAt: d
               }
             });

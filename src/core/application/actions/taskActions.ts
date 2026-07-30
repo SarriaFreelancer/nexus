@@ -230,7 +230,7 @@ export async function toggleSubtask(subtaskId: string, completed: boolean) {
         await prisma.task.update({
           where: { id: subtask.taskId },
           data: { 
-            status: "PRODUCTION",
+            status: "COMPLETED",
             endDate: new Date()
           }
         });
@@ -292,7 +292,7 @@ export async function quickCreateTask(projectId: string, title: string, status?:
       data: {
         projectId,
         title,
-        status: status || "BACKLOG",
+        status: status || "DISCOVERY",
         priority: "MEDIUM",
       }
     });
@@ -322,7 +322,7 @@ export async function toggleTaskCompletion(taskId: string, isCompleted: boolean)
       throw new Error("Task not found");
     }
 
-    const newStatus = isCompleted ? "PRODUCTION" : "BACKLOG";
+    const newStatus = isCompleted ? "COMPLETED" : "DISCOVERY";
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: {
@@ -335,7 +335,7 @@ export async function toggleTaskCompletion(taskId: string, isCompleted: boolean)
       task.projectId, 
       userId, 
       "TASK_STATUS", 
-      `Estado de tarea cambiado a ${isCompleted ? 'Completado' : 'Backlog'}`, 
+      `Estado de tarea cambiado a ${isCompleted ? 'Completado' : 'Descubrimiento'}`, 
       { taskId, newStatus }
     );
     

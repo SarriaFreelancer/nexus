@@ -84,7 +84,7 @@ export async function createProject(data: {
         data: data.initialTasks.map((title) => ({
           projectId: newProject.id,
           title,
-          status: "BACKLOG",
+          status: "DISCOVERY",
           priority: "MEDIUM",
         })),
       });

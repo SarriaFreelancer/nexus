@@ -20,6 +20,18 @@ export async function getCurrentWorkspace() {
 
   if (!membership) {
     if ((user as any).role === "SUPER_ADMIN") {
+      // Ensure user exists in database first to satisfy FK constraint
+      await prisma.user.upsert({
+        where: { id: (user as any).id },
+        update: {},
+        create: {
+          id: (user as any).id,
+          email: (user as any).email || "admin@nexus.com",
+          name: (user as any).name || "Admin User",
+          globalRole: "SUPER_ADMIN",
+        }
+      });
+
       // Auto-create a default workspace for super admin to prevent lockouts
       const newWorkspace = await prisma.workspace.create({
         data: {

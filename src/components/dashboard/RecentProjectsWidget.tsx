@@ -27,7 +27,7 @@ export const RecentProjectsWidget: React.FC<RecentProjectsWidgetProps> = ({ proj
           // Calculate progress safely
           let progress = 0;
           if (proj.tasks && proj.tasks.length > 0) {
-            const completed = proj.tasks.filter((t: any) => t.status === "PRODUCTION" || t.status === "DEPLOYING").length;
+            const completed = proj.tasks.filter((t: any) => t.status === "COMPLETED" || t.status === "DEPLOYED").length;
             progress = Math.round((completed / proj.tasks.length) * 100);
           }
 

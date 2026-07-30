@@ -65,11 +65,16 @@ export function CreateTaskForm({ onSuccess, onCancel }: { onSuccess: () => void,
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Estado</label>
-          <select name="status" className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none">
-            <option value="BACKLOG">Backlog</option>
-            <option value="IN_DESIGN">Diseño</option>
-            <option value="IN_DEVELOPMENT">Desarrollo</option>
-            <option value="IN_TESTING">Testing</option>
+          <select name="status" defaultValue="DEVELOPMENT" className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none">
+            <option value="DISCOVERY">Descubrimiento</option>
+            <option value="DESIGN">Diseño</option>
+            <option value="DEVELOPMENT">En Desarrollo</option>
+            <option value="TESTING">Testing / QA</option>
+            <option value="DEPLOYED">Desplegado</option>
+            <option value="MAINTENANCE">Mantenimiento</option>
+            <option value="PAUSED">En Pausa</option>
+            <option value="COMPLETED">Completado</option>
+            <option value="ARCHIVED">Archivado</option>
           </select>
         </div>
         <div className="space-y-1.5">

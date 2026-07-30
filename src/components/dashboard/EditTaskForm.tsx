@@ -83,7 +83,7 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
     // Check if all subtasks are completed now
     const allCompleted = newSubtasks.length > 0 && newSubtasks.every(st => st.completed);
     if (allCompleted) {
-      setStatus("PRODUCTION");
+      setStatus("COMPLETED");
     }
     
     await toggleSubtask(subtaskId, nextState);
@@ -167,11 +167,15 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
             onChange={(e) => setStatus(e.target.value)}
             className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
           >
-            <option value="BACKLOG">Backlog</option>
-            <option value="IN_DESIGN">Diseño</option>
-            <option value="IN_DEVELOPMENT">Desarrollo</option>
-            <option value="IN_TESTING">Testing / QA</option>
-            <option value="PRODUCTION">Deploy & Prod</option>
+            <option value="DISCOVERY">Descubrimiento</option>
+            <option value="DESIGN">Diseño</option>
+            <option value="DEVELOPMENT">En Desarrollo</option>
+            <option value="TESTING">Testing / QA</option>
+            <option value="DEPLOYED">Desplegado</option>
+            <option value="MAINTENANCE">Mantenimiento</option>
+            <option value="PAUSED">En Pausa</option>
+            <option value="COMPLETED">Completado</option>
+            <option value="ARCHIVED">Archivado</option>
           </select>
         </div>
 
