@@ -8,7 +8,7 @@ import {
   Info, PieChart as PieChartIcon, Zap, Shield, CheckCircle2, Bot, Filter,
   Flag, Users, Layers, Activity, FileUp, Pause, CheckSquare, Edit3, Plus, X, Link as LinkIcon, Trash2, Globe, ChevronDown
 } from "lucide-react";
-import { quickCreateTask, toggleTaskCompletion } from "@/core/application/actions/taskActions";
+import { quickCreateTask, toggleTaskCompletion, moveTaskStatus } from "@/core/application/actions/taskActions";
 import { getWorkspaceTaskStatuses } from "@/core/application/actions/taskStatusActions";
 
 export function EditProjectForm({ project, onSuccess, onCancel }: { project: any, onSuccess: (shouldClose?: boolean) => void, onCancel: () => void }) {
@@ -122,6 +122,19 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
     } else {
       fetchEvents(); // Refetch timeline to show the new event
       onSuccess(false); // Refresh parent without closing modal
+    }
+  };
+
+  const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
+    const previousTasks = [...tasks];
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus, updatedAt: new Date().toISOString() } : t));
+    const res = await moveTaskStatus(taskId, newStatus);
+    if (!res.success) {
+      setTasks(previousTasks);
+      alert("Error al cambiar estado de tarea: " + res.error);
+    } else {
+      fetchEvents();
+      onSuccess(false);
     }
   };
 
@@ -308,34 +321,70 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
               </div>
             </div>
             
-            <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+            {/* Tareas agrupadas por Estado / Fase */}
+            <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
               {tasks.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">No hay tareas creadas en este proyecto.</p>
+                <p className="text-xs text-slate-500 italic p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                  No hay tareas creadas en este proyecto.
+                </p>
               ) : (
-                tasks.map((t) => {
-                  const isCompleted = t.status === "COMPLETED" || t.status === "DEPLOYED";
-                  const statusObj = taskStatuses.find((st) => st.key === t.status);
-                  const statusName = statusObj?.name || (t.status === "TODO" ? "Por Hacer" : t.status === "IN_PROGRESS" ? "En Progreso" : t.status === "REVIEW" ? "En Revisión" : t.status === "COMPLETED" ? "Completado" : t.status);
+                taskStatuses.map((st) => {
+                  const statusTasks = tasks.filter((t) => {
+                    if (st.key === "TODO") return !t.status || t.status === "TODO" || t.status === "PENDING" || t.status === "DISCOVERY";
+                    return t.status === st.key;
+                  });
+
+                  if (statusTasks.length === 0) return null;
 
                   return (
-                    <div key={t.id} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[#13182b]/50 border border-slate-200 dark:border-slate-800/60 transition-all hover:border-indigo-500/30">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleTask(t.id, !isCompleted)}
-                        className="shrink-0 transition-colors cursor-pointer"
-                      >
-                        {isCompleted ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                        ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-indigo-500 transition-colors"></div>
-                        )}
-                      </button>
-                      <span className={`text-xs font-semibold flex-1 ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-200'}`}>
-                        {t.title}
-                      </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shrink-0">
-                        {statusName}
-                      </span>
+                    <div key={st.id} className="space-y-2 p-3 rounded-xl bg-slate-50 dark:bg-[#111628] border border-slate-200 dark:border-slate-800/70">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800/80">
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                          {st.name}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                          {statusTasks.length}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2 pt-1">
+                        {statusTasks.map((t) => {
+                          const isCompleted = t.status === "COMPLETED" || t.status === "DEPLOYED";
+
+                          return (
+                            <div key={t.id} className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-white dark:bg-[#161c33] border border-slate-200 dark:border-slate-800/60 transition-all hover:border-indigo-500/30 shadow-sm">
+                              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleTask(t.id, !isCompleted)}
+                                  className="shrink-0 transition-colors cursor-pointer"
+                                >
+                                  {isCompleted ? (
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                  ) : (
+                                    <div className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-indigo-500 transition-colors"></div>
+                                  )}
+                                </button>
+                                <span className={`text-xs font-semibold truncate ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-200'}`}>
+                                  {t.title}
+                                </span>
+                              </div>
+
+                              {/* Selector de estado directo */}
+                              <select
+                                value={t.status || "TODO"}
+                                onChange={(e) => handleUpdateTaskStatus(t.id, e.target.value)}
+                                className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none transition-all cursor-pointer shrink-0"
+                              >
+                                {taskStatuses.map((s) => (
+                                  <option key={s.id} value={s.key}>{s.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })
