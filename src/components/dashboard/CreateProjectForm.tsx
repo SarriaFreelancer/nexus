@@ -9,11 +9,13 @@ export function CreateProjectForm({ onSuccess, onCancel }: { onSuccess: () => vo
   const [customBanner, setCustomBanner] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
-  const [initialTasks, setInitialTasks] = useState<string[]>([]);
+  const [initialTasks, setInitialTasks] = useState<Array<{ title: string; status: string }>>([]);
   const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskStatus, setNewTaskStatus] = useState("TODO");
+
   const handleAddTask = () => {
     if (newTaskTitle.trim()) {
-      setInitialTasks([...initialTasks, newTaskTitle.trim()]);
+      setInitialTasks([...initialTasks, { title: newTaskTitle.trim(), status: newTaskStatus }]);
       setNewTaskTitle("");
     }
   };
@@ -216,21 +218,34 @@ export function CreateProjectForm({ onSuccess, onCancel }: { onSuccess: () => vo
               }
             }}
           />
+          <select
+            value={newTaskStatus}
+            onChange={(e) => setNewTaskStatus(e.target.value)}
+            className="w-[130px] bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none cursor-pointer"
+          >
+            <option value="TODO">Por Hacer</option>
+            <option value="IN_PROGRESS">En Progreso</option>
+            <option value="REVIEW">En Revisión</option>
+            <option value="COMPLETED">Completado</option>
+          </select>
           <button
             type="button"
             onClick={handleAddTask}
             disabled={!newTaskTitle.trim()}
-            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 shrink-0"
+            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 shrink-0 cursor-pointer"
           >
             Añadir
           </button>
         </div>
         {initialTasks.length > 0 && (
           <div className="space-y-1.5 mt-2">
-            {initialTasks.map((title, idx) => (
+            {initialTasks.map((t, idx) => (
               <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-100/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/60 text-xs">
-                <span className="text-slate-700 dark:text-slate-200 flex-1">{title}</span>
-                <button type="button" onClick={() => handleRemoveTask(idx)} className="p-1 text-slate-400 hover:text-rose-400 transition-colors">
+                <span className="text-slate-700 dark:text-slate-200 flex-1 font-medium">{t.title}</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mr-2">
+                  {t.status === "TODO" ? "Por Hacer" : t.status === "IN_PROGRESS" ? "En Progreso" : t.status === "REVIEW" ? "En Revisión" : "Completado"}
+                </span>
+                <button type="button" onClick={() => handleRemoveTask(idx)} className="p-1 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                 </button>
               </div>

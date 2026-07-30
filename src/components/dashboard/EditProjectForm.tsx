@@ -308,48 +308,34 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
               </div>
             </div>
             
-            <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
               {tasks.length === 0 ? (
                 <p className="text-xs text-slate-500 italic">No hay tareas creadas en este proyecto.</p>
               ) : (
-                taskStatuses.map(group => {
-                  const groupTasks = tasks.filter(t => t.status === group.key);
-                  if (groupTasks.length === 0) return null;
+                tasks.map((t) => {
+                  const isCompleted = t.status === "COMPLETED" || t.status === "DEPLOYED";
+                  const statusObj = taskStatuses.find((st) => st.key === t.status);
+                  const statusName = statusObj?.name || (t.status === "TODO" ? "Por Hacer" : t.status === "IN_PROGRESS" ? "En Progreso" : t.status === "REVIEW" ? "En Revisión" : t.status === "COMPLETED" ? "Completado" : t.status);
+
                   return (
-                    <div key={group.id} className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${group.color || 'border-indigo-500'} text-indigo-300 bg-indigo-500/10`}>
-                          {group.name} ({groupTasks.length})
-                        </span>
-                      </div>
-                      <div className="space-y-1.5 pl-1">
-                        {groupTasks.map(t => {
-                          const isCompleted = t.status === "COMPLETED" || t.status === "DEPLOYED";
-                          return (
-                            <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-white dark:bg-[#13182b]/50 border border-slate-200 dark:border-slate-800/60 transition-all hover:border-indigo-500/30">
-                              <button
-                                type="button"
-                                onClick={() => handleToggleTask(t.id, !isCompleted)}
-                                className="shrink-0 transition-colors"
-                              >
-                                {isCompleted ? (
-                                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                                ) : (
-                                  <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-indigo-500 transition-colors"></div>
-                                )}
-                              </button>
-                              <span className={`text-xs font-medium flex-1 ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}>
-                                {t.title}
-                              </span>
-                              {isCompleted && t.updatedAt && (
-                                <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-semibold shrink-0">
-                                  Finalizado el {new Date(t.updatedAt).toLocaleDateString()}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+                    <div key={t.id} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[#13182b]/50 border border-slate-200 dark:border-slate-800/60 transition-all hover:border-indigo-500/30">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTask(t.id, !isCompleted)}
+                        className="shrink-0 transition-colors cursor-pointer"
+                      >
+                        {isCompleted ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-indigo-500 transition-colors"></div>
+                        )}
+                      </button>
+                      <span className={`text-xs font-semibold flex-1 ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-200'}`}>
+                        {t.title}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shrink-0">
+                        {statusName}
+                      </span>
                     </div>
                   );
                 })

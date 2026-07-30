@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CheckSquare, Plus, Search, Filter, MoreHorizontal, User as UserIcon, Calendar, CheckCircle2, Loader2, GripVertical, Edit3 } from "lucide-react";
+import { CheckSquare, Plus, Search, Filter, MoreHorizontal, User as UserIcon, Calendar, CheckCircle2, Loader2, GripVertical, Edit3, AlertTriangle, Clock } from "lucide-react";
 import { getAllTasks, moveTaskStatus } from "@/core/application/actions/taskActions";
 import { getProjects } from "@/core/application/actions/projectActions";
 import { getWorkspaceTaskStatuses, createCustomTaskStatus } from "@/core/application/actions/taskStatusActions";
@@ -335,10 +335,23 @@ export default function TareasPage() {
                   {colTasks.map((t) => {
                     const subtasksCompleted = t.subtasks?.filter((st: any) => st.completed).length || 0;
                     const subtasksCount = t.subtasks?.length || 0;
+
+                    const isCompleted = t.status === "COMPLETED" || t.status === "DEPLOYED";
+                    const now = new Date();
+                    const dueDate = t.dueDate ? new Date(t.dueDate) : null;
+                    const isOverdue = !isCompleted && dueDate && dueDate < now;
+                    const hoursDiff = dueDate ? (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60) : null;
+                    const isDueSoon = !isCompleted && !isOverdue && hoursDiff !== null && hoursDiff <= 48 && hoursDiff >= 0;
                     
                     return (
                     <DraggableTask key={t.id} task={t}>
-                      <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/40 transition-all space-y-2.5 shadow-md group">
+                      <div className={`p-3.5 rounded-xl border transition-all space-y-2.5 shadow-md group ${
+                        isOverdue
+                          ? "bg-rose-50/80 dark:bg-rose-950/25 border-rose-500/70 dark:border-rose-700/80 shadow-rose-500/10 ring-1 ring-rose-500/40"
+                          : isDueSoon
+                          ? "bg-amber-50/60 dark:bg-amber-950/20 border-amber-400 dark:border-amber-700/70"
+                          : "bg-slate-100 dark:bg-slate-900/90 border-slate-200 dark:border-slate-800 hover:border-indigo-500/40"
+                      }`}>
                         {t.coverUrl && (
                           <div className="w-full h-24 -mt-1 mb-2 rounded-lg overflow-hidden shrink-0 border border-slate-200 dark:border-slate-800">
                             <img src={t.coverUrl} alt="Cover" className="w-full h-full object-cover" />
@@ -350,8 +363,8 @@ export default function TareasPage() {
                             {t.project?.code || "TSK"}-{t.id.substring(0,4).toUpperCase()}
                           </span>
                           <div className="flex items-center gap-1.5">
-                            <Badge variant={t.priority === "URGENT" || t.priority === "HIGH" ? "rose" : t.priority === "MEDIUM" ? "amber" : "neutral"}>
-                              {t.priority}
+                            <Badge variant={isOverdue ? "rose" : t.priority === "URGENT" || t.priority === "HIGH" ? "rose" : t.priority === "MEDIUM" ? "amber" : "neutral"}>
+                              {isOverdue ? "VENCIDA" : t.priority}
                             </Badge>
                             <button
                               type="button"
@@ -384,9 +397,19 @@ export default function TareasPage() {
 
                         {/* Footer Assignee & Date */}
                         <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800/60 text-[10px]">
-                          <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
-                            <Calendar className="h-3 w-3" /> {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "Sin fecha"}
-                          </span>
+                          {isOverdue ? (
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-500/10 dark:bg-rose-950/80 border border-rose-500/30 text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3 text-rose-500 animate-bounce" /> VENCIDA ({new Date(t.dueDate).toLocaleDateString()})
+                            </span>
+                          ) : isDueSoon ? (
+                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-500/10 dark:bg-amber-950/80 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                              <Clock className="h-3 w-3 text-amber-500 animate-pulse" /> PRÓXIMA ({new Date(t.dueDate).toLocaleDateString()})
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
+                              <Calendar className="h-3 w-3" /> {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "Sin fecha"}
+                            </span>
+                          )}
 
                           {t.assignee && (
                             <img

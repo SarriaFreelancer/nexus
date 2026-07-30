@@ -7,7 +7,7 @@ import { getUserPreferences, updateUserPreference } from "@/core/application/act
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AvatarGroup } from "@/components/ui/AvatarGroup";
-import { FolderKanban, Plus, Search, Filter, GitBranch, ExternalLink, Globe, Layers, Loader2, Edit3, Grid, List as ListIcon, Calendar, SortDesc, Star } from "lucide-react";
+import { FolderKanban, Plus, Search, Filter, GitBranch, ExternalLink, Globe, Layers, Loader2, Edit3, Grid, List as ListIcon, Calendar, SortDesc, Star, Share2, Copy, Check, UserPlus } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { CreateProjectForm } from "@/components/dashboard/CreateProjectForm";
 import { EditProjectForm } from "@/components/dashboard/EditProjectForm";
@@ -24,6 +24,8 @@ export default function ProyectosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editProject, setEditProject] = useState<any | null>(null);
+  const [shareProject, setShareProject] = useState<any | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const activeUser = {
     id: (session?.user as any)?.id || "admin-1",
@@ -319,6 +321,13 @@ export default function ProyectosPage() {
                   {/* Top right actions */}
                   <div className="absolute top-3 right-3 flex items-center gap-2 text-white/70 z-10">
                     <button
+                      onClick={(e) => { e.preventDefault(); setShareProject(proj); }}
+                      title="Compartir Proyecto"
+                      className="h-7 w-7 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/80 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
                       onClick={(e) => handleToggleStar(proj.id, e)}
                       title={proj.isStarred ? "Quitar de destacados" : "Marcar como destacado"}
                       className="h-7 w-7 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/80 transition-colors cursor-pointer"
@@ -499,6 +508,13 @@ export default function ProyectosPage() {
 
                   <div className="flex items-center gap-2 shrink-0">
                     <button
+                      onClick={(e) => { e.preventDefault(); setShareProject(proj); }}
+                      title="Compartir Proyecto"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors cursor-pointer"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={(e) => handleToggleStar(proj.id, e)}
                       title={proj.isStarred ? "Quitar de destacados" : "Marcar como destacado"}
                       className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 transition-colors cursor-pointer"
@@ -573,6 +589,58 @@ export default function ProyectosPage() {
           </div>
         )}
       </>
+      )}
+      {/* Modal Compartir Proyecto */}
+      {shareProject && (
+        <Modal isOpen={!!shareProject} onClose={() => setShareProject(null)} title={`Compartir Proyecto: ${shareProject.name}`}>
+          <div className="space-y-5 text-xs">
+            <p className="text-slate-500 dark:text-slate-400">
+              Copia el enlace directo de este proyecto para compartirlo con los colaboradores asignados a tu espacio de trabajo.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-700 dark:text-slate-300">Enlace Directo del Proyecto</label>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  type="text"
+                  value={typeof window !== "undefined" ? `${window.location.origin}/proyectos/${shareProject.id}` : ""}
+                  className="flex-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== "undefined") {
+                      navigator.clipboard.writeText(`${window.location.origin}/proyectos/${shareProject.id}`);
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-md cursor-pointer"
+                >
+                  {copiedLink ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedLink ? "¡Copiado!" : "Copiar"}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-800 dark:text-slate-200">Colaboradores del Espacio de Trabajo</span>
+                <Link
+                  href="/usuarios"
+                  className="flex items-center gap-1 text-indigo-500 hover:text-indigo-400 font-bold text-[11px]"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>+ Invitar Colaboradores</span>
+                </Link>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                Los usuarios invitados a tu espacio de trabajo en el módulo <span className="font-bold text-slate-700 dark:text-slate-300">/usuarios</span> podrán acceder a este proyecto automáticamente según el nivel de permisos otorgado.
+              </p>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

@@ -80,12 +80,16 @@ export async function createProject(data: {
 
     if (data.initialTasks && data.initialTasks.length > 0) {
       await prisma.task.createMany({
-        data: data.initialTasks.map((title) => ({
-          projectId: newProject.id,
-          title,
-          status: "DISCOVERY",
-          priority: "MEDIUM",
-        })),
+        data: data.initialTasks.map((t: any) => {
+          const title = typeof t === "string" ? t : t.title;
+          const status = typeof t === "object" && t.status ? t.status : "TODO";
+          return {
+            projectId: newProject.id,
+            title,
+            status,
+            priority: "MEDIUM",
+          };
+        }),
       });
     }
 
