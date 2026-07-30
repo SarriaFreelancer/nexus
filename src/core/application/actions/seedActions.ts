@@ -97,6 +97,17 @@ export async function seedTestData() {
     await prisma.project.createMany({ data: projectsData });
     const insertedProjects = await prisma.project.findMany({ where: { workspaceId: workspace.id }});
 
+    // 4.5. Crear Versiones de los Proyectos
+    const versionsData = insertedProjects.map((proj, idx) => ({
+      projectId: proj.id,
+      version: `v1.${idx}.0`,
+      title: "Versión Actual",
+      changelog: "Ajustes y funcionalidades de la versión activa.",
+      releaseDate: new Date(),
+      isCurrent: true,
+    }));
+    await prisma.projectVersion.createMany({ data: versionsData });
+
     // 5. Crear Tareas
     const taskStatuses = ["DISCOVERY", "DESIGN", "DEVELOPMENT", "TESTING", "DEPLOYED", "MAINTENANCE", "PAUSED", "COMPLETED", "ARCHIVED"];
     const tasksData = mockNextTasks.map((t, i) => {

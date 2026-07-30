@@ -9,6 +9,7 @@ import {
   Flag, Users, Layers, Activity, FileUp, Pause, CheckSquare, Edit3, Plus, X, Link as LinkIcon, Trash2, Github, Globe, ChevronDown
 } from "lucide-react";
 import { quickCreateTask, toggleTaskCompletion } from "@/core/application/actions/taskActions";
+import { getWorkspaceTaskStatuses } from "@/core/application/actions/taskStatusActions";
 
 export function EditProjectForm({ project, onSuccess, onCancel }: { project: any, onSuccess: (shouldClose?: boolean) => void, onCancel: () => void }) {
   const [loading, setLoading] = useState(false);
@@ -17,6 +18,8 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+
+  const [taskStatuses, setTaskStatuses] = useState<any[]>([]);
 
   const fetchEvents = () => {
     getProjectEvents(project.id).then(res => {
@@ -27,6 +30,9 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
 
   useEffect(() => {
     fetchEvents();
+    getWorkspaceTaskStatuses().then(res => {
+      if (res.success && res.data) setTaskStatuses(res.data);
+    });
   }, [project.id]);
 
   const PRESET_BANNERS = [
@@ -86,7 +92,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
   // Checklist states
   const [tasks, setTasks] = useState<any[]>(project.tasks || []);
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskStatus, setNewTaskStatus] = useState("DEVELOPMENT");
+  const [newTaskStatus, setNewTaskStatus] = useState("PENDING");
   const [addingTask, setAddingTask] = useState(false);
 
   const handleAddTask = async () => {
@@ -106,7 +112,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
     const previousTasks = [...tasks];
     
     // Optimistic update
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: isCompleted ? "COMPLETED" : "DISCOVERY", updatedAt: isCompleted ? new Date().toISOString() : t.updatedAt } : t));
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: isCompleted ? "COMPLETED" : "PENDING", updatedAt: isCompleted ? new Date().toISOString() : t.updatedAt } : t));
     
     const res = await toggleTaskCompletion(taskId, isCompleted);
     if (!res.success) {
@@ -284,17 +290,11 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                 <select
                   value={newTaskStatus}
                   onChange={(e) => setNewTaskStatus(e.target.value)}
-                  className="w-[150px] bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-2 py-2 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none transition-all cursor-pointer"
+                  className="w-[160px] bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-2 py-2 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none transition-all cursor-pointer"
                 >
-                  <option value="DISCOVERY">Descubrimiento</option>
-                  <option value="DESIGN">En Diseño</option>
-                  <option value="DEVELOPMENT">En Desarrollo</option>
-                  <option value="TESTING">En Pruebas</option>
-                  <option value="DEPLOYED">Desplegado</option>
-                  <option value="MAINTENANCE">Mantenimiento</option>
-                  <option value="PAUSED">En Pausa</option>
-                  <option value="COMPLETED">Completado</option>
-                  <option value="ARCHIVED">Archivado</option>
+                  {taskStatuses.map((st) => (
+                    <option key={st.id} value={st.key}>{st.name}</option>
+                  ))}
                 </select>
                 <button
                   type="button"
@@ -312,24 +312,14 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
               {tasks.length === 0 ? (
                 <p className="text-xs text-slate-500 italic">No hay tareas creadas en este proyecto.</p>
               ) : (
-                [
-                  { id: "DISCOVERY", label: "Descubrimiento", color: "text-purple-400 border-purple-500/30 bg-purple-500/10" },
-                  { id: "DESIGN", label: "En Diseño", color: "text-blue-400 border-blue-500/30 bg-blue-500/10" },
-                  { id: "DEVELOPMENT", label: "En Desarrollo", color: "text-indigo-400 border-indigo-500/30 bg-indigo-500/10" },
-                  { id: "TESTING", label: "En Pruebas", color: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10" },
-                  { id: "DEPLOYED", label: "Desplegado", color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10" },
-                  { id: "MAINTENANCE", label: "Mantenimiento", color: "text-amber-400 border-amber-500/30 bg-amber-500/10" },
-                  { id: "PAUSED", label: "En Pausa", color: "text-orange-400 border-orange-500/30 bg-orange-500/10" },
-                  { id: "COMPLETED", label: "Completado", color: "text-green-400 border-green-500/30 bg-green-500/10" },
-                  { id: "ARCHIVED", label: "Archivado", color: "text-slate-400 border-slate-500/30 bg-slate-500/10" },
-                ].map(group => {
-                  const groupTasks = tasks.filter(t => t.status === group.id);
+                taskStatuses.map(group => {
+                  const groupTasks = tasks.filter(t => t.status === group.key);
                   if (groupTasks.length === 0) return null;
                   return (
                     <div key={group.id} className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${group.color}`}>
-                          {group.label} ({groupTasks.length})
+                        <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${group.color || 'border-indigo-500'} text-indigo-300 bg-indigo-500/10`}>
+                          {group.name} ({groupTasks.length})
                         </span>
                       </div>
                       <div className="space-y-1.5 pl-1">

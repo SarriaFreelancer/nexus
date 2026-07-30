@@ -13,6 +13,12 @@ import { CreateProjectForm } from "@/components/dashboard/CreateProjectForm";
 import { EditProjectForm } from "@/components/dashboard/EditProjectForm";
 import { translateProjectStatus } from "@/lib/utils";
 
+const DEFAULT_CREATOR = {
+  id: "superadmin-1",
+  name: "Super Admin (Creador)",
+  avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+};
+
 export default function ProyectosPage() {
   const [search, setSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("TODOS");
@@ -242,6 +248,19 @@ export default function ProyectosPage() {
               
               const currentVersion = proj.versions && proj.versions.length > 0 ? proj.versions[0].version : null;
               
+              const projectTeam = (() => {
+                if (proj.team && proj.team.length > 0) return proj.team;
+                const members = [DEFAULT_CREATOR];
+                if (proj.tasks && Array.isArray(proj.tasks)) {
+                  proj.tasks.forEach((t: any) => {
+                    if (t.assignee && !members.some((m) => m.id === t.assignee.id)) {
+                      members.push(t.assignee);
+                    }
+                  });
+                }
+                return members;
+              })();
+
               return (
               <div
                 key={proj.id}
@@ -295,11 +314,9 @@ export default function ProyectosPage() {
                       </h3>
                     </Link>
                     <div className="flex items-center gap-2 shrink-0">
-                      {currentVersion && (
-                        <Badge variant="purple" size="md">
-                          {currentVersion}
-                        </Badge>
-                      )}
+                      <Badge variant="purple" size="md">
+                        {currentVersion || "v1.0.0"}
+                      </Badge>
                       <Badge
                         variant={
                           translatedStatus === "En Desarrollo"
@@ -360,7 +377,7 @@ export default function ProyectosPage() {
                           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                           Equipo
                         </span>
-                        <AvatarGroup users={proj.team || []} limit={3} />
+                        <AvatarGroup users={projectTeam} limit={3} />
                       </div>
                       
                       <div className="space-y-1">
@@ -444,7 +461,7 @@ export default function ProyectosPage() {
                   </div>
 
                   <div className="flex items-center justify-end gap-6 w-[30%] shrink-0">
-                    <AvatarGroup users={proj.team || []} limit={3} />
+                    <AvatarGroup users={projectTeam} limit={3} />
                     <div className="text-right shrink-0">
                       <p className="text-[11px] text-slate-400">Inicio</p>
                       <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{startDateStr}</p>

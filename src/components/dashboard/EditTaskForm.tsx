@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { updateTask, addSubtask, toggleSubtask, deleteSubtask, addTaskAttachment, removeTaskAttachment } from "@/core/application/actions/taskActions";
 import { getProjects } from "@/core/application/actions/projectActions";
+import { getWorkspaceTaskStatuses } from "@/core/application/actions/taskStatusActions";
 import { Loader2, Plus, Trash2, CheckCircle2, Circle, Zap, Calendar, FolderKanban, Paperclip, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
 
 export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSuccess: () => void; onCancel: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [projects, setProjects] = useState<any[]>([]);
+  const [taskStatuses, setTaskStatuses] = useState<any[]>([]);
   const [subtasks, setSubtasks] = useState<any[]>(task.subtasks || []);
   const [status, setStatus] = useState(task.status);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
@@ -22,6 +24,9 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
   useEffect(() => {
     getProjects().then((res) => {
       if (res.success && res.data) setProjects(res.data);
+    });
+    getWorkspaceTaskStatuses().then((res) => {
+      if (res.success && res.data) setTaskStatuses(res.data);
     });
   }, []);
 
@@ -167,15 +172,9 @@ export function EditTaskForm({ task, onSuccess, onCancel }: { task: any; onSucce
             onChange={(e) => setStatus(e.target.value)}
             className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
           >
-            <option value="DISCOVERY">Descubrimiento</option>
-            <option value="DESIGN">Diseño</option>
-            <option value="DEVELOPMENT">En Desarrollo</option>
-            <option value="TESTING">Testing / QA</option>
-            <option value="DEPLOYED">Desplegado</option>
-            <option value="MAINTENANCE">Mantenimiento</option>
-            <option value="PAUSED">En Pausa</option>
-            <option value="COMPLETED">Completado</option>
-            <option value="ARCHIVED">Archivado</option>
+            {taskStatuses.map((st) => (
+              <option key={st.id} value={st.key}>{st.name}</option>
+            ))}
           </select>
         </div>
 

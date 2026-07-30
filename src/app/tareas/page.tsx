@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { CheckSquare, Plus, Search, Filter, MoreHorizontal, User as UserIcon, Calendar, CheckCircle2, Loader2, GripVertical, Edit3 } from "lucide-react";
 import { getAllTasks, moveTaskStatus } from "@/core/application/actions/taskActions";
 import { getProjects } from "@/core/application/actions/projectActions";
+import { getWorkspaceTaskStatuses, createCustomTaskStatus } from "@/core/application/actions/taskStatusActions";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { CreateTaskForm } from "@/components/dashboard/CreateTaskForm";
@@ -46,23 +47,16 @@ function DroppableColumn({ id, children, className }: { id: string, children: Re
 }
 
 export default function TareasPage() {
-  const columns = [
-    { status: "DISCOVERY", title: "Descubrimiento", color: "border-purple-500" },
-    { status: "DESIGN", title: "Diseño UI/UX", color: "border-blue-500" },
-    { status: "DEVELOPMENT", title: "En Desarrollo", color: "border-indigo-500" },
-    { status: "TESTING", title: "Testing / QA", color: "border-cyan-500" },
-    { status: "DEPLOYED", title: "Desplegado", color: "border-emerald-500" },
-    { status: "MAINTENANCE", title: "Mantenimiento", color: "border-amber-500" },
-    { status: "PAUSED", title: "En Pausa", color: "border-orange-500" },
-    { status: "COMPLETED", title: "Completado", color: "border-green-500" },
-    { status: "ARCHIVED", title: "Archivado", color: "border-slate-500" },
-  ];
-
+  const [taskStatuses, setTaskStatuses] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNewStatusModalOpen, setIsNewStatusModalOpen] = useState(false);
+  const [newStatusName, setNewStatusName] = useState("");
+  const [newStatusColor, setNewStatusColor] = useState("border-purple-500");
+  const [creatingStatus, setCreatingStatus] = useState(false);
   const [editTask, setEditTask] = useState<any | null>(null);
   const [activeTask, setActiveTask] = useState<any | null>(null);
 
@@ -81,15 +75,45 @@ export default function TareasPage() {
     });
   };
 
+  const fetchStatusesAndProjects = async () => {
+    const [stRes, prRes] = await Promise.all([
+      getWorkspaceTaskStatuses(),
+      getProjects()
+    ]);
+    if (stRes.success && stRes.data) setTaskStatuses(stRes.data);
+    if (prRes.success && prRes.data) setProjects(prRes.data);
+  };
+
   useEffect(() => {
-    getProjects().then((res) => {
-      if (res.success && res.data) setProjects(res.data);
-    });
+    fetchStatusesAndProjects();
   }, []);
 
   useEffect(() => {
     fetchTasks();
   }, [selectedProjectId]);
+
+  const handleCreateStatus = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStatusName.trim()) return;
+    setCreatingStatus(true);
+    try {
+      const res = await createCustomTaskStatus(newStatusName.trim(), newStatusColor);
+      if (res.success) {
+        setNewStatusName("");
+        setIsNewStatusModalOpen(false);
+        if (res.data) {
+          setTaskStatuses((prev) => [...prev, res.data]);
+        }
+        await fetchStatusesAndProjects();
+      } else {
+        alert("Error al crear estado: " + (res.error || "Intenta nuevamente"));
+      }
+    } catch (err: any) {
+      alert("Error al crear estado: " + err.message);
+    } finally {
+      setCreatingStatus(false);
+    }
+  };
 
   const handleDragStart = (event: any) => {
     const { active } = event;
@@ -180,6 +204,13 @@ export default function TareasPage() {
               <span>Filtros</span>
             </button>
             <button 
+              onClick={() => setIsNewStatusModalOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 bg-[#161b2c] hover:bg-slate-800 text-slate-300 text-sm font-bold rounded-xl transition-all border border-slate-800"
+            >
+              <Plus className="w-4 h-4 text-purple-400" />
+              <span>Nuevo Estado</span>
+            </button>
+            <button 
               onClick={() => setIsModalOpen(true)}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20"
             >
@@ -188,6 +219,54 @@ export default function TareasPage() {
             </button>
           </div>
       </div>
+
+      <Modal isOpen={isNewStatusModalOpen} onClose={() => setIsNewStatusModalOpen(false)} title="Crear Nuevo Estado de Tarea">
+        <form onSubmit={handleCreateStatus} className="space-y-4 text-sm">
+          <div className="space-y-1.5">
+            <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Nombre del Estado</label>
+            <input
+              required
+              type="text"
+              value={newStatusName}
+              onChange={(e) => setNewStatusName(e.target.value)}
+              placeholder="Ej. Revisión Cliente, Por Desplegar..."
+              className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-slate-700 dark:text-slate-300 font-medium text-xs">Color del Borde / Estado</label>
+            <select
+              value={newStatusColor}
+              onChange={(e) => setNewStatusColor(e.target.value)}
+              className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+            >
+              <option value="border-purple-500">Púrpura</option>
+              <option value="border-pink-500">Rosa</option>
+              <option value="border-amber-500">Ámbar</option>
+              <option value="border-teal-500">Teal / Turquesa</option>
+              <option value="border-indigo-500">Índigo</option>
+              <option value="border-rose-500">Rojo / Rose</option>
+            </select>
+          </div>
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800/80">
+            <button
+              type="button"
+              onClick={() => setIsNewStatusModalOpen(false)}
+              className="px-4 py-2 rounded-xl text-slate-500 dark:text-slate-400 font-medium hover:text-slate-200"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={creatingStatus || !newStatusName.trim()}
+              className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {creatingStatus && <Loader2 className="w-4 h-4 animate-spin" />}
+              Guardar Estado
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Kanban Board Columns */}
       {isLoading ? (
@@ -202,27 +281,24 @@ export default function TareasPage() {
         onDragEnd={handleDragEnd}
       >
         <div className="flex gap-4 overflow-x-auto min-h-[650px] pb-4 snap-x">
-          {columns.map((col) => {
-            const colTasks = tasks.filter((t) => t.status === col.status);
+          {taskStatuses.map((col) => {
+            const colTasks = tasks.filter((t) => t.status === col.key);
 
             return (
               <DroppableColumn
-                key={col.status}
-                id={col.status}
+                key={col.key}
+                id={col.key}
                 className="bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-3.5 flex flex-col h-full shadow-lg min-w-[280px] max-w-[320px] shrink-0 snap-start"
               >
                 {/* Column Header */}
                 <div className="space-y-3 mb-3 shrink-0">
-                  <div className={`flex items-center justify-between pb-2 border-b-2 ${col.color}`}>
+                  <div className={`flex items-center justify-between pb-2 border-b-2 ${col.color || 'border-indigo-500'}`}>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{col.title}</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{col.name}</span>
                       <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900 text-[10px] font-bold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
                         {colTasks.length}
                       </span>
                     </div>
-                    <button className="p-1 rounded text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
                   </div>
                 </div>
 

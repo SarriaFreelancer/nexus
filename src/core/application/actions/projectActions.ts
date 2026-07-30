@@ -90,6 +90,18 @@ export async function createProject(data: {
       });
     }
 
+    // Auto-create initial version
+    await prisma.projectVersion.create({
+      data: {
+        projectId: newProject.id,
+        version: "v1.0.0",
+        title: "Versión Inicial",
+        changelog: "Creación e inicio de proyecto",
+        releaseDate: new Date(),
+        isCurrent: true,
+      }
+    });
+
     await recordProjectEvent(newProject.id, userId, "CREATED", "Proyecto creado", { status: newProject.status });
     await recordAuditLog(userId, "CREATE_PROJECT", "Creó un proyecto", `Proyecto: ${newProject.name}`, { after: { name: newProject.name, status: newProject.status } });
 
