@@ -9,47 +9,74 @@ export async function getNotifications() {
     const { workspace, user } = await getCurrentWorkspace();
     const userId = (user as any).id;
 
-    // 1. Get all members of the current workspace so collaborators receive notifications
+    // 1. Get all unique members of the current workspace
     const workspaceMembers = await prisma.workspaceMember.findMany({
       where: { workspaceId: workspace.id },
       select: { userId: true }
     });
 
-    const memberUserIds = Array.from(new Set([userId, ...workspaceMembers.map(m => m.userId)]));
+    const memberUserIds = Array.from(
+      new Set([userId, ...workspaceMembers.map(m => m.userId).filter(Boolean)])
+    );
 
-    // 2. Auto-clean / remove notifications for completed or deployed tasks
-    const completedTasks = await prisma.task.findMany({
-      where: {
-        project: { workspaceId: workspace.id },
-        status: { in: ["COMPLETED", "DEPLOYED", "ARCHIVED"] }
-      },
-      select: { title: true }
+    // 2. Remove duplicate notifications from the database
+    const allNotifs = await prisma.notification.findMany({
+      orderBy: { createdAt: "desc" }
     });
 
-    if (completedTasks.length > 0) {
-      const titlesToRemove = completedTasks.flatMap(t => [
-        `🚨 Tarea Vencida: ${t.title}`,
-        `⏳ Próxima a Vencer: ${t.title}`
-      ]);
+    const seenKeys = new Set<string>();
+    const duplicateIdsToDelete: string[] = [];
+
+    for (const notif of allNotifs) {
+      const key = `${notif.userId}_${notif.title}`;
+      if (seenKeys.has(key)) {
+        duplicateIdsToDelete.push(notif.id);
+      } else {
+        seenKeys.add(key);
+      }
+    }
+
+    if (duplicateIdsToDelete.length > 0) {
       await prisma.notification.deleteMany({
-        where: {
-          title: { in: titlesToRemove }
-        }
+        where: { id: { in: duplicateIdsToDelete } }
       });
     }
 
-    // 3. Synchronize task notifications for overdue and due-soon tasks across all workspace members
+    // 3. Auto-clean notifications for completed, deployed, or deleted tasks
+    const allWorkspaceTasks = await prisma.task.findMany({
+      where: { project: { workspaceId: workspace.id } },
+      include: { project: true }
+    });
+
+    const completedTaskTitles = new Set(
+      allWorkspaceTasks
+        .filter(t => ["COMPLETED", "DEPLOYED", "ARCHIVED"].includes(t.status))
+        .map(t => t.title)
+    );
+
+    if (completedTaskTitles.size > 0) {
+      const titlesArray = Array.from(completedTaskTitles);
+      for (const tTitle of titlesArray) {
+        await prisma.notification.deleteMany({
+          where: {
+            title: {
+              in: [
+                `🚨 Tarea Vencida: ${tTitle}`,
+                `⏳ Próxima a Vencer: ${tTitle}`
+              ]
+            }
+          }
+        });
+      }
+    }
+
+    // 4. Synchronize task notifications for overdue and due-soon tasks
     const now = new Date();
     const next48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
-    const pendingTasks = await prisma.task.findMany({
-      where: {
-        project: { workspaceId: workspace.id },
-        status: { notIn: ["COMPLETED", "DEPLOYED", "ARCHIVED"] },
-        dueDate: { not: null }
-      },
-      include: { project: true }
-    });
+    const pendingTasks = allWorkspaceTasks.filter(
+      t => !["COMPLETED", "DEPLOYED", "ARCHIVED"].includes(t.status) && t.dueDate
+    );
 
     for (const task of pendingTasks) {
       if (!task.dueDate) continue;
@@ -60,6 +87,7 @@ export async function getNotifications() {
       // If task is OVERDUE
       if (dueDateObj < now) {
         const title = `🚨 Tarea Vencida: ${task.title}`;
+        const message = `La tarea "${task.title}" del proyecto "${task.project.name}" venció el ${formattedDate}. ¡Requiere atención urgente!`;
         
         for (const targetUserId of memberUserIds) {
           const existing = await prisma.notification.findFirst({
@@ -70,9 +98,9 @@ export async function getNotifications() {
               data: {
                 userId: targetUserId,
                 title,
-                message: `La tarea "${task.title}" en el proyecto "${task.project.name}" venció el ${formattedDate}. ¡Requiere atención urgente!`,
+                message,
                 type: "ERROR",
-                link: "/tareas"
+                link: `/tareas?task=${task.id}`
               }
             });
           }
@@ -81,6 +109,7 @@ export async function getNotifications() {
       // If task is DUE SOON (next 48h)
       else if (dueDateObj <= next48h) {
         const title = `⏳ Próxima a Vencer: ${task.title}`;
+        const message = `La tarea "${task.title}" del proyecto "${task.project.name}" vence el ${formattedDate} (en las próximas 48h).`;
         
         for (const targetUserId of memberUserIds) {
           const existing = await prisma.notification.findFirst({
@@ -91,9 +120,9 @@ export async function getNotifications() {
               data: {
                 userId: targetUserId,
                 title,
-                message: `La tarea "${task.title}" en el proyecto "${task.project.name}" vence el ${formattedDate} (en las próximas 48h).`,
+                message,
                 type: "WARNING",
-                link: "/tareas"
+                link: `/tareas?task=${task.id}`
               }
             });
           }
@@ -104,7 +133,7 @@ export async function getNotifications() {
     const notifications = await prisma.notification.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
-      take: 30
+      take: 40
     });
 
     return { success: true, data: notifications };

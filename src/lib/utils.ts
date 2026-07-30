@@ -33,3 +33,13 @@ export function translateProjectStatus(status: string): string {
   };
   return statusMap[status] || status;
 }
+
+export function translatePriority(priority: string): string {
+  const priorityMap: Record<string, string> = {
+    "URGENT": "Urgente",
+    "HIGH": "Alta",
+    "MEDIUM": "Media",
+    "LOW": "Baja"
+  };
+  return priorityMap[priority] || priority;
+}

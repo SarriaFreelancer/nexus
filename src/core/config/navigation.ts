@@ -42,6 +42,6 @@ export const navigationItems: NavItem[] = [
   { title: "IA Assistant", href: "/ia-assistant", icon: Bot },
   { title: "Usuarios", href: "/usuarios", icon: UsersCore, allowedRoles: ["ADMIN"] },
   { title: "Auditoría", href: "/auditoria", icon: ShieldAlert, allowedRoles: ["ADMIN"] },
-  { title: "Notificaciones", href: "/notificaciones", icon: Bell, badge: 12 },
+  { title: "Notificaciones", href: "/notificaciones", icon: Bell },
   { title: "Configuración", href: "/configuracion", icon: Settings, allowedRoles: ["ADMIN", "MANAGER"] },
 ];

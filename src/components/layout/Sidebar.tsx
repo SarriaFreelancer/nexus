@@ -9,6 +9,7 @@ import { mockCurrentUser } from "@/core/infrastructure/mockData";
 import { cn } from "@/lib/utils";
 import { ProfileModal } from "./ProfileModal";
 import { getUserWorkspaces, switchActiveWorkspace, createWorkspace } from "@/core/application/actions/workspaceActions";
+import { getNotifications } from "@/core/application/actions/notificationActions";
 import { Modal } from "@/components/ui/Modal";
 import { Plus, Check, Loader2, Building, ChevronDown, ChevronsLeft, ChevronsRight, ShieldCheck, LogOut } from "lucide-react";
 
@@ -27,6 +28,7 @@ export const Sidebar: React.FC = () => {
 
   // Workspace Switcher states
   const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNewWsModalOpen, setIsNewWsModalOpen] = useState(false);
   const [newWsName, setNewWsName] = useState("");
@@ -41,6 +43,11 @@ export const Sidebar: React.FC = () => {
 
   useEffect(() => {
     fetchWorkspaces();
+    getNotifications().then(res => {
+      if (res.success && res.data) {
+        setUnreadNotifCount(res.data.filter((n: any) => !n.isRead).length);
+      }
+    });
   }, []);
 
   const activeWorkspace = workspaces.find((w) => w.isActive) || workspaces[0];
@@ -232,9 +239,9 @@ export const Sidebar: React.FC = () => {
                 {!collapsed && <span className="truncate">{item.title}</span>}
               </div>
 
-              {!collapsed && item.badge && (
-                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800/60">
-                  {item.badge}
+              {!collapsed && (item.href === "/notificaciones" ? unreadNotifCount > 0 : !!item.badge) && (
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                  {item.href === "/notificaciones" ? unreadNotifCount : item.badge}
                 </span>
               )}
             </Link>

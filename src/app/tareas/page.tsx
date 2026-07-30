@@ -6,6 +6,7 @@ import { getAllTasks, moveTaskStatus } from "@/core/application/actions/taskActi
 import { getProjects } from "@/core/application/actions/projectActions";
 import { getWorkspaceTaskStatuses, createCustomTaskStatus } from "@/core/application/actions/taskStatusActions";
 import { Badge } from "@/components/ui/Badge";
+import { translatePriority } from "@/lib/utils";
 import { Modal } from "@/components/ui/Modal";
 import { CreateTaskForm } from "@/components/dashboard/CreateTaskForm";
 import { EditTaskForm } from "@/components/dashboard/EditTaskForm";
@@ -364,7 +365,7 @@ export default function TareasPage() {
                           </span>
                           <div className="flex items-center gap-1.5">
                             <Badge variant={isOverdue ? "rose" : t.priority === "URGENT" || t.priority === "HIGH" ? "rose" : t.priority === "MEDIUM" ? "amber" : "neutral"}>
-                              {isOverdue ? "VENCIDA" : t.priority}
+                              {isOverdue ? "Vencida" : translatePriority(t.priority)}
                             </Badge>
                             <button
                               type="button"
@@ -398,12 +399,12 @@ export default function TareasPage() {
                         {/* Footer Assignee & Date */}
                         <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800/60 text-[10px]">
                           {isOverdue ? (
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-500/10 dark:bg-rose-950/80 border border-rose-500/30 text-rose-600 dark:text-rose-400 flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3 text-rose-500 animate-bounce" /> VENCIDA ({new Date(t.dueDate).toLocaleDateString()})
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-500/10 dark:bg-rose-950/80 border border-rose-500/30 text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3 text-rose-500 animate-bounce" /> Vencida ({new Date(t.dueDate).toLocaleDateString()})
                             </span>
                           ) : isDueSoon ? (
-                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-500/10 dark:bg-amber-950/80 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                              <Clock className="h-3 w-3 text-amber-500 animate-pulse" /> PRÓXIMA ({new Date(t.dueDate).toLocaleDateString()})
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 dark:bg-amber-950/80 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                              <Clock className="h-3 w-3 text-amber-500 animate-pulse" /> Próxima ({new Date(t.dueDate).toLocaleDateString()})
                             </span>
                           ) : (
                             <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
