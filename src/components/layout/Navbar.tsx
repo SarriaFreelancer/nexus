@@ -1,15 +1,26 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Plus, Bell, Calendar, SlidersHorizontal } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Search, Plus, Bell, Calendar, SlidersHorizontal, ShieldCheck } from "lucide-react";
 import { mockCurrentUser } from "@/core/infrastructure/mockData";
 import { CommandPalette } from "./CommandPalette";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
 import { CalendarWidget } from "./CalendarWidget";
+import { ProfileModal } from "./ProfileModal";
 
 export const Navbar: React.FC = () => {
+  const { data: session } = useSession();
   const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const currentUser = {
+    name: session?.user?.name || mockCurrentUser.name,
+    email: session?.user?.email || mockCurrentUser.email,
+    avatarUrl: (session?.user as any)?.image || mockCurrentUser.avatarUrl,
+    role: (session?.user as any)?.role || "SUPER_ADMIN",
+  };
 
   return (
     <>
@@ -54,18 +65,24 @@ export const Navbar: React.FC = () => {
           <CalendarWidget />
 
           {/* User Profile Avatar */}
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800/80">
+          <button
+            onClick={() => setIsProfileOpen(true)}
+            className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800/80 hover:opacity-80 transition-opacity cursor-pointer"
+            title="Ver Perfil y Configuración"
+          >
             <img
-              src={mockCurrentUser.avatarUrl}
-              alt={mockCurrentUser.name}
+              src={currentUser.avatarUrl}
+              alt={currentUser.name}
               className="h-8 w-8 rounded-xl object-cover ring-2 ring-indigo-500/40"
             />
-          </div>
+          </button>
         </div>
       </header>
 
       {/* Spotlight Command Modal */}
       <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
+      {/* Profile Modal */}
+      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </>
   );
 };

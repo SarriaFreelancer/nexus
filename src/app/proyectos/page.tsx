@@ -2,30 +2,34 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { getProjects } from "@/core/application/actions/projectActions";
+import { getProjects, toggleStarProject } from "@/core/application/actions/projectActions";
 import { getUserPreferences, updateUserPreference } from "@/core/application/actions/userActions";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AvatarGroup } from "@/components/ui/AvatarGroup";
-import { FolderKanban, Plus, Search, Filter, GitBranch, ExternalLink, Globe, Layers, Loader2, Edit3, Grid, List as ListIcon, Calendar, SortDesc } from "lucide-react";
+import { FolderKanban, Plus, Search, Filter, GitBranch, ExternalLink, Globe, Layers, Loader2, Edit3, Grid, List as ListIcon, Calendar, SortDesc, Star } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { CreateProjectForm } from "@/components/dashboard/CreateProjectForm";
 import { EditProjectForm } from "@/components/dashboard/EditProjectForm";
 import { translateProjectStatus } from "@/lib/utils";
-
-const DEFAULT_CREATOR = {
-  id: "superadmin-1",
-  name: "Super Admin (Creador)",
-  avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-};
+import { getWorkspaceMembers } from "@/core/application/actions/workspaceActions";
+import { useSession } from "next-auth/react";
 
 export default function ProyectosPage() {
+  const { data: session } = useSession();
   const [search, setSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("TODOS");
   const [dbProjects, setDbProjects] = useState<any[]>([]);
+  const [userRole, setUserRole] = useState<string>("ADMIN");
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editProject, setEditProject] = useState<any | null>(null);
+
+  const activeUser = {
+    id: (session?.user as any)?.id || "admin-1",
+    name: session?.user?.name || "Administrador",
+    avatarUrl: (session?.user as any)?.image || "https://i.pravatar.cc/150?u=admin",
+  };
   
   // Preferences State
   const [viewMode, setViewMode] = useState<"GRID" | "LIST">("GRID");
@@ -35,13 +39,22 @@ export default function ProyectosPage() {
 
   const fetchProjectsAndPrefs = async () => {
     setIsLoading(true);
-    const [projRes, prefRes] = await Promise.all([
+    const [projRes, prefRes, wsRes] = await Promise.all([
       getProjects(),
-      getUserPreferences()
+      getUserPreferences(),
+      getWorkspaceMembers(),
     ]);
     
     if (projRes.success && projRes.data) {
       setDbProjects(projRes.data);
+    }
+    
+    if (wsRes.success && wsRes.workspace) {
+      const activeMember = wsRes.data?.find((m: any) => m.user?.email);
+      // Determine current user's role
+      if (wsRes.workspace) {
+        setUserRole(activeMember?.role || "ADMIN");
+      }
     }
     
     if (prefRes.success && prefRes.data) {
@@ -57,6 +70,22 @@ export default function ProyectosPage() {
   useEffect(() => {
     fetchProjectsAndPrefs();
   }, []);
+
+  const handleToggleStar = async (projectId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Optimistic UI state update
+    setDbProjects((prev) =>
+      prev.map((p) => (p.id === projectId ? { ...p, isStarred: !p.isStarred } : p))
+    );
+    const res = await toggleStarProject(projectId);
+    if (!res.success) {
+      // Revert if error
+      setDbProjects((prev) =>
+        prev.map((p) => (p.id === projectId ? { ...p, isStarred: !p.isStarred } : p))
+      );
+    }
+  };
 
   const handleViewModeChange = (mode: "GRID" | "LIST") => {
     setViewMode(mode);
@@ -147,13 +176,16 @@ export default function ProyectosPage() {
               Gestiona todos tus proyectos en un solo lugar
             </p>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="hidden md:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Proyecto
-          </button>
+          {/* Action Button: Nuevo Proyecto (Solo para roles con permiso de escritura) */}
+          {userRole !== "GUEST" && userRole !== "CLIENT" && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/20 transition-all cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Nuevo Proyecto</span>
+            </button>
+          )}
         </div>
 
         {/* Bottom Header: Filters and Toggles */}
@@ -250,7 +282,7 @@ export default function ProyectosPage() {
               
               const projectTeam = (() => {
                 if (proj.team && proj.team.length > 0) return proj.team;
-                const members = [DEFAULT_CREATOR];
+                const members = [activeUser];
                 if (proj.tasks && Array.isArray(proj.tasks)) {
                   proj.tasks.forEach((t: any) => {
                     if (t.assignee && !members.some((m) => m.id === t.assignee.id)) {
@@ -277,20 +309,25 @@ export default function ProyectosPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0f1424] via-transparent to-black/30" />
                   
                   {/* Top left badge */}
-                  {proj.priority === "HIGH" || proj.priority === "URGENT" ? (
-                    <div className="absolute top-3 left-3 bg-purple-600/90 backdrop-blur text-white text-[10px] font-bold px-2 py-0.5 rounded-sm">
+                  {proj.isStarred ? (
+                    <div className="absolute top-3 left-3 bg-amber-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded shadow flex items-center gap-1 z-10">
+                      <Star className="w-3 h-3 fill-slate-950 text-slate-950" />
                       DESTACADO
                     </div>
                   ) : null}
 
                   {/* Top right actions */}
-                  <div className="absolute top-3 right-3 flex items-center gap-2 text-white/70">
-                    <button className="h-7 w-7 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 hover:text-white transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  <div className="absolute top-3 right-3 flex items-center gap-2 text-white/70 z-10">
+                    <button
+                      onClick={(e) => handleToggleStar(proj.id, e)}
+                      title={proj.isStarred ? "Quitar de destacados" : "Marcar como destacado"}
+                      className="h-7 w-7 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/80 transition-colors cursor-pointer"
+                    >
+                      <Star className={`w-3.5 h-3.5 ${proj.isStarred ? "fill-amber-400 text-amber-400" : "text-slate-300 hover:text-white"}`} />
                     </button>
                     <button 
                       onClick={(e) => { e.preventDefault(); setEditProject(proj); }}
-                      className="h-7 w-7 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 hover:text-white transition-colors"
+                      className="h-7 w-7 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/80 text-slate-300 hover:text-white transition-colors cursor-pointer"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                     </button>
@@ -460,27 +497,18 @@ export default function ProyectosPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-6 w-[30%] shrink-0">
-                    <AvatarGroup users={projectTeam} limit={3} />
-                    <div className="text-right shrink-0">
-                      <p className="text-[11px] text-slate-400">Inicio</p>
-                      <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{startDateStr}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[11px] text-slate-400">Fin</p>
-                      <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{endDateStr}</p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button 
-                        onClick={(e) => { e.preventDefault(); setEditProject(proj); }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <Link href={`/proyectos/${proj.id}`} className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors">
-                        <ExternalLink className="w-4 h-4" />
-                      </Link>
-                    </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={(e) => handleToggleStar(proj.id, e)}
+                      title={proj.isStarred ? "Quitar de destacados" : "Marcar como destacado"}
+                      className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 transition-colors cursor-pointer"
+                    >
+                      <Star className={`w-4 h-4 ${proj.isStarred ? "fill-amber-400 text-amber-400" : "text-slate-400 hover:text-white"}`} />
+                    </button>
+                    <AvatarGroup users={[activeUser, ...(proj.tasks?.map((t: any) => t.assignee).filter(Boolean) || [])]} limit={3} />
+                    <Link href={`/proyectos/${proj.id}`} className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors">
+                      <ExternalLink className="w-4 h-4" />
+                    </Link>
                   </div>
                 </div>
               )

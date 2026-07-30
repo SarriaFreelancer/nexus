@@ -10,6 +10,8 @@ import { ProductivityChartWidget } from "@/components/dashboard/ProductivityChar
 import { SystemAlertsWidget } from "@/components/dashboard/SystemAlertsWidget";
 import { getDashboardMetrics, getDashboardData, getWeeklyProductivity } from "@/core/application/actions/dashboardActions";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const [metricsResult, dataResult, productivityResult] = await Promise.all([
     getDashboardMetrics(),

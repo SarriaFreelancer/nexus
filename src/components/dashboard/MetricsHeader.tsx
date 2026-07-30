@@ -32,17 +32,17 @@ export const MetricsHeader: React.FC<{ metrics: any }> = ({ metrics }) => {
       iconBg: "bg-emerald-950 text-emerald-400 border border-emerald-700/50",
     },
     {
-      title: "Ingresos del Mes",
-      value: formatCurrency(24500), // Static as we haven't implemented financials
-      growth: `+8%`,
+      title: "Ingresos (Aprobados)",
+      value: formatCurrency(metrics.totalIncome || 0),
+      growth: `Reales`,
       icon: DollarSign,
       color: "from-emerald-600/20 to-green-600/10 border-emerald-500/30 text-emerald-400",
       iconBg: "bg-emerald-950 text-emerald-400 border border-emerald-700/50",
     },
     {
       title: "Horas Registradas",
-      value: formatHours(342.5), // Static for now
-      growth: `+15%`,
+      value: formatHours(metrics.totalLoggedHours || 0),
+      growth: `Reales`,
       icon: Clock,
       color: "from-amber-600/20 to-orange-600/10 border-amber-500/30 text-amber-400",
       iconBg: "bg-amber-950 text-amber-400 border border-amber-700/50",

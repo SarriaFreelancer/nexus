@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getProjectById } from "@/core/application/actions/projectActions";
-import { FolderKanban, ArrowLeft, Loader2, GitBranch, Globe, Calendar, Clock, CheckCircle2 } from "lucide-react";
+import { FolderKanban, ArrowLeft, Loader2, GitBranch, Globe, Calendar, Clock, CheckCircle2, Share2, Copy, UserPlus, Check } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AvatarGroup } from "@/components/ui/AvatarGroup";
+import { Modal } from "@/components/ui/Modal";
 import Link from "next/link";
 
 export default function ProjectDetail() {
@@ -16,6 +17,8 @@ export default function ProjectDetail() {
   
   const [project, setProject] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -80,12 +83,22 @@ export default function ProjectDetail() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 min-w-[200px]">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500 dark:text-slate-400 font-medium">Progreso General</span>
-            <span className="text-slate-800 dark:text-slate-200 font-bold">{progress}%</span>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 min-w-[240px]">
+          <div className="flex-1 space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500 dark:text-slate-400 font-medium">Progreso General</span>
+              <span className="text-slate-800 dark:text-slate-200 font-bold">{progress}%</span>
+            </div>
+            <ProgressBar value={progress} color="bg-gradient-to-r from-indigo-500 to-purple-500" />
           </div>
-          <ProgressBar value={progress} color="bg-gradient-to-r from-indigo-500 to-purple-500" />
+
+          <button
+            onClick={() => setIsShareModalOpen(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all cursor-pointer shrink-0"
+          >
+            <Share2 className="w-4 h-4" />
+            <span>Compartir</span>
+          </button>
         </div>
       </div>
 
@@ -176,6 +189,57 @@ export default function ProjectDetail() {
           </div>
         </div>
       </div>
+
+      {/* Modal Compartir Proyecto */}
+      <Modal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} title="Compartir Proyecto">
+        <div className="space-y-5 text-xs">
+          <p className="text-slate-500 dark:text-slate-400">
+            Copia el enlace directo de este proyecto para compartirlo con los colaboradores asignados a tu espacio de trabajo.
+          </p>
+
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-700 dark:text-slate-300">Enlace Directo del Proyecto</label>
+            <div className="flex gap-2">
+              <input
+                readOnly
+                type="text"
+                value={typeof window !== "undefined" ? window.location.href : ""}
+                className="flex-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    navigator.clipboard.writeText(window.location.href);
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 2000);
+                  }
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-md cursor-pointer"
+              >
+                {copiedLink ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
+                <span>{copiedLink ? "¡Copiado!" : "Copiar"}</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-slate-800 dark:text-slate-200">Colaboradores del Espacio de Trabajo</span>
+              <Link
+                href="/usuarios"
+                className="flex items-center gap-1 text-indigo-500 hover:text-indigo-400 font-bold text-[11px]"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>+ Invitar Colaboradores</span>
+              </Link>
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+              Los usuarios invitados a tu espacio de trabajo en el módulo <span className="font-bold text-slate-700 dark:text-slate-300">/usuarios</span> podrán acceder a este proyecto automáticamente según el nivel de permisos otorgado.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

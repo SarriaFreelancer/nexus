@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth/next";
+import { cookies } from "next/headers";
 import { authOptions } from "./auth";
 import { prisma } from "./prisma";
 
@@ -16,10 +17,24 @@ export async function getCurrentWorkspace() {
     throw new Error("UNAUTHORIZED");
   }
 
-  let membership = await prisma.workspaceMember.findFirst({
-    where: { userId: (user as any).id },
-    include: { workspace: true },
-  });
+  const cookieStore = await cookies();
+  const activeWorkspaceId = cookieStore.get("active_workspace_id")?.value;
+
+  let membership: any = null;
+
+  if (activeWorkspaceId) {
+    membership = await prisma.workspaceMember.findFirst({
+      where: { userId: (user as any).id, workspaceId: activeWorkspaceId },
+      include: { workspace: true },
+    });
+  }
+
+  if (!membership) {
+    membership = await prisma.workspaceMember.findFirst({
+      where: { userId: (user as any).id },
+      include: { workspace: true },
+    });
+  }
 
   if (!membership) {
     if ((user as any).role === "SUPER_ADMIN") {

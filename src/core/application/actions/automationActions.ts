@@ -107,6 +107,7 @@ export async function executeAutomations(projectId: string, triggerEvent: string
           await prisma.projectEvent.create({
             data: {
               projectId,
+              userId: (rule as any).userId || "system",
               type: "SYSTEM",
               content: `Automatización ejecutada: Estado cambiado a En Pruebas por la regla "${rule.name}"`,
             }
@@ -119,6 +120,7 @@ export async function executeAutomations(projectId: string, triggerEvent: string
           await prisma.projectEvent.create({
             data: {
               projectId,
+              userId: (rule as any).userId || "system",
               type: "SYSTEM",
               content: `Automatización ejecutada: Estado cambiado a En Producción por la regla "${rule.name}"`,
             }
@@ -127,6 +129,7 @@ export async function executeAutomations(projectId: string, triggerEvent: string
           await prisma.projectEvent.create({
             data: {
               projectId,
+              userId: (rule as any).userId || "system",
               type: "SYSTEM",
               content: `[Notificación] Automatización "${rule.name}": El evento ${triggerEvent} ha ocurrido.`,
             }

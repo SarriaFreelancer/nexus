@@ -36,6 +36,18 @@ export async function getDashboardMetrics() {
       where: { workspaceId: workspace.id }
     });
 
+    const loggedHoursSum = await prisma.task.aggregate({
+      where: { project: { workspaceId: workspace.id } },
+      _sum: { loggedHs: true }
+    });
+    const totalLoggedHours = loggedHoursSum._sum?.loggedHs || 0;
+
+    const financialIncomeSum = await prisma.financialRecord.aggregate({
+      where: { workspaceId: workspace.id, type: "INCOME" },
+      _sum: { amount: true }
+    });
+    const totalIncome = financialIncomeSum._sum?.amount || 0;
+
     const taskProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
     return {
@@ -47,8 +59,8 @@ export async function getDashboardMetrics() {
         completedTasks,
         totalClients,
         taskProgress,
-        velocity: 18, // Simulated for now
-        upcomingDeploys: 3 // Simulated for now
+        totalLoggedHours,
+        totalIncome,
       }
     };
   } catch (error: any) {

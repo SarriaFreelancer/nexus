@@ -9,7 +9,7 @@ const DEFAULT_STATUSES = [
   { key: "IN_PROGRESS", name: "En Ejecución", color: "border-indigo-500", position: 1, isSystem: true },
   { key: "TESTING", name: "En Pruebas", color: "border-cyan-500", position: 2, isSystem: true },
   { key: "PAUSED", name: "En Pausa", color: "border-orange-500", position: 3, isSystem: true },
-  { key: "COMPLETED", name: "Completadas", color: "border-emerald-500", position: 4, isSystem: true },
+  { key: "COMPLETED", name: "Completado", color: "border-emerald-500", position: 4, isSystem: true },
 ];
 
 export async function getWorkspaceTaskStatuses() {
@@ -21,16 +21,19 @@ export async function getWorkspaceTaskStatuses() {
       orderBy: { position: "asc" },
     });
 
-    // If no statuses configured yet, initialize default 5 base statuses
-    if (statuses.length === 0) {
+    // Ensure all 5 system base statuses exist for the workspace
+    const existingKeys = new Set(statuses.map((s) => s.key));
+    const missingDefaults = DEFAULT_STATUSES.filter((d) => !existingKeys.has(d.key));
+
+    if (missingDefaults.length > 0) {
       await prisma.taskStatusConfig.createMany({
-        data: DEFAULT_STATUSES.map((s) => ({
+        data: missingDefaults.map((s) => ({
           workspaceId: workspace.id,
           key: s.key,
           name: s.name,
           color: s.color,
           position: s.position,
-          isSystem: s.isSystem,
+          isSystem: true,
         })),
       });
 

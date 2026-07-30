@@ -55,7 +55,6 @@ export async function createProject(data: {
   technologies: any; // JSON
   estimatedHours?: number;
   bannerUrl?: string;
-  bannerUrl?: string;
   status?: any;
   initialTasks?: string[]; // Titles of initial tasks
 }) {
@@ -166,6 +165,24 @@ export async function deleteProject(id: string) {
 
     revalidatePath("/proyectos");
     return { success: true, message: "Project deleted successfully" };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function toggleStarProject(id: string) {
+  try {
+    const { workspace } = await getCurrentWorkspace();
+    const existing = await prisma.project.findUnique({ where: { id, workspaceId: workspace.id } });
+    if (!existing) throw new Error("NOT_FOUND_OR_UNAUTHORIZED");
+
+    const updated = await prisma.project.update({
+      where: { id },
+      data: { isStarred: !existing.isStarred },
+    });
+
+    revalidatePath("/proyectos");
+    return { success: true, data: updated };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

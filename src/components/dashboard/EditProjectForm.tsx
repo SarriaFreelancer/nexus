@@ -6,7 +6,7 @@ import { getProjectEvents, addProjectComment } from "@/core/application/actions/
 import { 
   MessageSquare, GitCommit, FileText, UserPlus, Clock, Loader2, Send, 
   Info, PieChart as PieChartIcon, Zap, Shield, CheckCircle2, Bot, Filter,
-  Flag, Users, Layers, Activity, FileUp, Pause, CheckSquare, Edit3, Plus, X, Link as LinkIcon, Trash2, Github, Globe, ChevronDown
+  Flag, Users, Layers, Activity, FileUp, Pause, CheckSquare, Edit3, Plus, X, Link as LinkIcon, Trash2, Globe, ChevronDown
 } from "lucide-react";
 import { quickCreateTask, toggleTaskCompletion } from "@/core/application/actions/taskActions";
 import { getWorkspaceTaskStatuses } from "@/core/application/actions/taskStatusActions";

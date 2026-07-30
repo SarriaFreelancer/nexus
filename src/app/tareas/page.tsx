@@ -58,7 +58,22 @@ export default function TareasPage() {
   const [newStatusColor, setNewStatusColor] = useState("border-purple-500");
   const [creatingStatus, setCreatingStatus] = useState(false);
   const [editTask, setEditTask] = useState<any | null>(null);
-  const [activeTask, setActiveTask] = useState<any | null>(null);
+  const [activeTask, setActiveTask] = useState<any>(null);
+
+  const topScrollRef = React.useRef<HTMLDivElement>(null);
+  const bottomScrollRef = React.useRef<HTMLDivElement>(null);
+
+  const handleTopScroll = () => {
+    if (topScrollRef.current && bottomScrollRef.current) {
+      bottomScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+    }
+  };
+
+  const handleBottomScroll = () => {
+    if (topScrollRef.current && bottomScrollRef.current) {
+      topScrollRef.current.scrollLeft = bottomScrollRef.current.scrollLeft;
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -280,7 +295,20 @@ export default function TareasPage() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto min-h-[650px] pb-4 snap-x">
+        {/* Sleek Top Horizontal Scrollbar */}
+        <div 
+          ref={topScrollRef} 
+          onScroll={handleTopScroll}
+          className="overflow-x-auto w-full mb-2 h-3.5 custom-scrollbar shrink-0"
+        >
+          <div style={{ width: `${taskStatuses.length * 300 + (taskStatuses.length - 1) * 16}px` }} className="h-1" />
+        </div>
+
+        <div 
+          ref={bottomScrollRef}
+          onScroll={handleBottomScroll}
+          className="flex gap-4 overflow-x-auto min-h-[650px] pb-4 snap-x custom-scrollbar"
+        >
           {taskStatuses.map((col) => {
             const colTasks = tasks.filter((t) => t.status === col.key);
 

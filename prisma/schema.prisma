@@ -139,6 +139,7 @@ model Project {
   gitRepoUrl     String?
   serverDomain   String?
   bannerUrl      String?
+  isStarred      Boolean          @default(false)
   estimatedHours Float?
   actualHours    Float            @default(0)
   startDate      DateTime?
