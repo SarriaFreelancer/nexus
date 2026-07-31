@@ -23,11 +23,8 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          // Si es el superadmin y no existe, podemos loguearlo temporalmente
-          // o requerir que el seeder lo haya creado. Lo mejor es requerir que exista,
-          // pero para asegurar acceso inicial, podemos validar un bypass de superadmin si no hay usuarios.
           const userCount = await prisma.user.count();
-          if (userCount === 0 && credentials.email === "superadmin@nexus.com" && credentials.password === "Superadmin123") {
+          if (userCount === 0 && cleanEmail === "superadmin@nexus.com" && credentials.password === "Superadmin123") {
             const hashedPassword = await bcrypt.hash(credentials.password, 10);
             const newUser = await prisma.user.create({
               data: {
@@ -45,7 +42,7 @@ export const authOptions: NextAuthOptions = {
         const isPasswordValid = user.password ? await bcrypt.compare(credentials.password, user.password) : false;
         
         if (isPasswordValid) {
-           return { id: user.id, email: user.email, name: user.name, role: user.globalRole };
+           return { id: user.id, email: user.email, name: user.name, role: user.globalRole || "ADMIN" };
         }
 
         return null;
@@ -55,16 +52,14 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = "SUPER_ADMIN";
+        token.role = (user as any).role || "ADMIN";
         token.id = user.id;
-      } else {
-        token.role = "SUPER_ADMIN";
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
-        (session.user as any).role = "SUPER_ADMIN";
+        (session.user as any).role = token.role || "ADMIN";
         (session.user as any).id = token.id;
       }
       return session;
