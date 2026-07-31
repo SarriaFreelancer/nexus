@@ -6,7 +6,7 @@ import { getProjectEvents, addProjectComment } from "@/core/application/actions/
 import { 
   MessageSquare, GitCommit, FileText, UserPlus, Clock, Loader2, Send, 
   Info, PieChart as PieChartIcon, Zap, Shield, CheckCircle2, Bot, Filter,
-  Flag, Users, Layers, Activity, FileUp, Pause, CheckSquare, Edit3, Plus, X, Link as LinkIcon, Trash2, Globe, ChevronDown
+  Flag, Users, Layers, Activity, FileUp, Pause, CheckSquare, Edit3, Plus, X, Link as LinkIcon, Trash2, Globe, ChevronDown, ChevronUp
 } from "lucide-react";
 import { quickCreateTask, toggleTaskCompletion, moveTaskStatus } from "@/core/application/actions/taskActions";
 import { getWorkspaceTaskStatuses } from "@/core/application/actions/taskStatusActions";
@@ -94,6 +94,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskStatus, setNewTaskStatus] = useState("PENDING");
   const [addingTask, setAddingTask] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
   const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;
@@ -328,27 +329,46 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                   No hay tareas creadas en este proyecto.
                 </p>
               ) : (
-                taskStatuses.map((st) => {
-                  const statusTasks = tasks.filter((t) => {
-                    if (st.key === "TODO") return !t.status || t.status === "TODO" || t.status === "PENDING" || t.status === "DISCOVERY";
-                    return t.status === st.key;
-                  });
+                (() => {
+                  const otherKnownKeys = new Set(taskStatuses.filter((s) => s.key !== "TODO").map((s) => s.key));
+                  return taskStatuses.map((st) => {
+                    const statusTasks = tasks.filter((t) => {
+                      if (st.key === "TODO") {
+                        return !t.status || t.status === "TODO" || t.status === "PENDING" || t.status === "DISCOVERY" || !otherKnownKeys.has(t.status);
+                      }
+                      return t.status === st.key;
+                    });
 
-                  if (statusTasks.length === 0) return null;
+                    if (statusTasks.length === 0) return null;
+
+                  const isCollapsed = !!collapsedGroups[st.key];
 
                   return (
                     <div key={st.id} className="space-y-2 p-3 rounded-xl bg-slate-50 dark:bg-[#111628] border border-slate-200 dark:border-slate-800/70">
-                      <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800/80">
+                      <div 
+                        onClick={() => setCollapsedGroups(prev => ({ ...prev, [st.key]: !prev[st.key] }))}
+                        className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800/80 cursor-pointer select-none group/hdr"
+                      >
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
                           {st.name}
                         </span>
-                        <span className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-400">
-                          {statusTasks.length}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                            {statusTasks.length}
+                          </span>
+                          <button
+                            type="button"
+                            title={isCollapsed ? "Mostrar tareas de esta fase" : "Ocultar tareas de esta fase"}
+                            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                          >
+                            {isCollapsed ? <ChevronDown className="w-4 h-4 text-indigo-400" /> : <ChevronUp className="w-4 h-4 text-slate-400" />}
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="space-y-2 pt-1">
+                      {!isCollapsed && (
+                        <div className="space-y-2 pt-1">
                         {statusTasks.map((t) => {
                           const isCompleted = t.status === "COMPLETED" || t.status === "DEPLOYED";
 
@@ -385,9 +405,11 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                           );
                         })}
                       </div>
+                      )}
                     </div>
                   );
                 })
+              })()
               )}
             </div>
           </div>

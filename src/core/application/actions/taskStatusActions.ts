@@ -5,10 +5,10 @@ import { revalidatePath } from "next/cache";
 import { getCurrentWorkspace, hasPermission } from "@/lib/serverAuth";
 
 const DEFAULT_STATUSES = [
-  { key: "PENDING", name: "Programada", color: "border-slate-500", position: 0, isSystem: true },
-  { key: "IN_PROGRESS", name: "En Ejecución", color: "border-indigo-500", position: 1, isSystem: true },
+  { key: "TODO", name: "En Desarrollo", color: "border-indigo-500", position: 0, isSystem: true },
+  { key: "IN_PROGRESS", name: "En Ejecución", color: "border-blue-500", position: 1, isSystem: true },
   { key: "TESTING", name: "En Pruebas", color: "border-cyan-500", position: 2, isSystem: true },
-  { key: "PAUSED", name: "En Pausa", color: "border-orange-500", position: 3, isSystem: true },
+  { key: "PAUSED", name: "En Pausa", color: "border-amber-500", position: 3, isSystem: true },
   { key: "COMPLETED", name: "Completado", color: "border-emerald-500", position: 4, isSystem: true },
 ];
 
@@ -98,7 +98,7 @@ export async function deleteCustomTaskStatus(statusId: string) {
     }
 
     if (statusConfig.isSystem) {
-      throw new Error("No se pueden eliminar los estados base del sistema");
+      throw new Error("No se pueden eliminar estados del sistema");
     }
 
     await prisma.taskStatusConfig.delete({
