@@ -7,7 +7,10 @@ import { recordAuditLog } from "./auditActions";
 
 export async function getFinancials() {
   try {
-    const { workspace } = await getCurrentWorkspace();
+    const { workspace, role } = await getCurrentWorkspace();
+    if (role !== "ADMIN" && role !== "COMMERCIAL") {
+      return { success: true, data: [] }; // Hide financials for other roles
+    }
     const data = await prisma.financialRecord.findMany({
       where: { workspaceId: workspace.id },
       orderBy: { date: "desc" },

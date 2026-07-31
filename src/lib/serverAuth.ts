@@ -105,3 +105,43 @@ export function hasPermission(userRole: string, requiredRole: string) {
   const requiredLevel = roleHierarchy[requiredRole] || 0;
   return userLevel >= requiredLevel;
 }
+
+export function getProjectAccessFilter(user: any, member: any, role: string) {
+  const isFullAdmin = role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  if (isFullAdmin) return undefined;
+
+  let allowedIds: string[] = [];
+  try {
+    const raw = member?.allowedProjectIds;
+    allowedIds = Array.isArray(raw) ? raw : typeof raw === 'string' ? JSON.parse(raw) : [];
+  } catch (e) {
+    allowedIds = [];
+  }
+
+  return {
+    OR: [
+      { id: { in: allowedIds } },
+      { tasks: { some: { assigneeId: user.id } } }
+    ]
+  };
+}
+
+export function getTaskAccessFilter(user: any, member: any, role: string) {
+  const isFullAdmin = role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  if (isFullAdmin) return undefined;
+
+  let allowedIds: string[] = [];
+  try {
+    const raw = member?.allowedProjectIds;
+    allowedIds = Array.isArray(raw) ? raw : typeof raw === 'string' ? JSON.parse(raw) : [];
+  } catch (e) {
+    allowedIds = [];
+  }
+
+  return {
+    OR: [
+      { projectId: { in: allowedIds } },
+      { assigneeId: user.id }
+    ]
+  };
+}

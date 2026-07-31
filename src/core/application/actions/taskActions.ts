@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-import { getCurrentWorkspace, hasPermission } from "@/lib/serverAuth";
+import { getCurrentWorkspace, hasPermission, getTaskAccessFilter } from "@/lib/serverAuth";
 import { recordAuditLog } from "./auditActions";
 import { recordProjectEvent } from "./projectEventActions";
 
@@ -12,11 +12,14 @@ import { recordProjectEvent } from "./projectEventActions";
 // ==========================================
 export async function getTasksByProjectId(projectId: string) {
   try {
-    const { workspace } = await getCurrentWorkspace();
+    const { workspace, user, member, role } = await getCurrentWorkspace();
+    const taskFilter = getTaskAccessFilter(user, member, role);
+    
     const tasks = await prisma.task.findMany({
       where: { 
         projectId,
-        project: { workspaceId: workspace.id }
+        project: { workspaceId: workspace.id },
+        ...(taskFilter ? { AND: [taskFilter] } : {})
       },
       include: {
         assignee: true,
@@ -35,8 +38,13 @@ export async function getTasksByProjectId(projectId: string) {
 
 export async function getAllTasks(projectId?: string) {
   try {
-    const { workspace } = await getCurrentWorkspace();
-    const whereClause: any = { project: { workspaceId: workspace.id } };
+    const { workspace, user, member, role } = await getCurrentWorkspace();
+    const taskFilter = getTaskAccessFilter(user, member, role);
+    
+    const whereClause: any = { 
+      project: { workspaceId: workspace.id },
+      ...(taskFilter ? { AND: [taskFilter] } : {})
+    };
     if (projectId) {
       whereClause.projectId = projectId;
     }
@@ -335,7 +343,7 @@ export async function toggleTaskCompletion(taskId: string, isCompleted: boolean)
       task.projectId, 
       userId, 
       "TASK_STATUS", 
-      `Estado de tarea cambiado a ${isCompleted ? 'Completado' : 'Descubrimiento'}`, 
+      `Estado de la tarea "${task.title}" cambiado a ${isCompleted ? 'Completado' : 'Descubrimiento'}`, 
       { taskId, newStatus }
     );
     

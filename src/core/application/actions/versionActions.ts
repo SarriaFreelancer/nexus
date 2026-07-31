@@ -2,13 +2,18 @@
 
 import { prisma } from "@/lib/prisma";
 
-import { getCurrentWorkspace } from "@/lib/serverAuth";
+import { getCurrentWorkspace, getProjectAccessFilter } from "@/lib/serverAuth";
 
 export async function getVersions() {
   try {
-    const { workspace } = await getCurrentWorkspace();
+    const { workspace, user, member, role } = await getCurrentWorkspace();
+    const projectFilter = getProjectAccessFilter(user, member, role);
+    
     const data = await prisma.projectVersion.findMany({
-      where: { project: { workspaceId: workspace.id } },
+      where: { 
+        project: { workspaceId: workspace.id },
+        ...(projectFilter ? { AND: [{ project: projectFilter }] } : {})
+      },
       include: { project: true, tasks: true },
       orderBy: { releaseDate: "desc" },
     });

@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning className="h-full dark">
+    <html lang="es" suppressHydrationWarning className="h-full">
       <head />
       <body suppressHydrationWarning className="h-full bg-white dark:bg-[#0b0e1a] text-slate-900 dark:text-slate-100 antialiased flex overflow-hidden transition-colors duration-300">
         <SessionProvider>

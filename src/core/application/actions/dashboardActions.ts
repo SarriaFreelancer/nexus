@@ -1,52 +1,72 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentWorkspace } from "@/lib/serverAuth";
+import { getCurrentWorkspace, getProjectAccessFilter, getTaskAccessFilter } from "@/lib/serverAuth";
 
 export async function getDashboardMetrics() {
   try {
-    const { workspace } = await getCurrentWorkspace();
+    const { workspace, user, member, role } = await getCurrentWorkspace();
+    const projectFilter = getProjectAccessFilter(user, member, role);
+    const taskFilter = getTaskAccessFilter(user, member, role);
 
     const totalProjects = await prisma.project.count({
-      where: { workspaceId: workspace.id }
+      where: { 
+        workspaceId: workspace.id,
+        ...(projectFilter ? { AND: [projectFilter] } : {})
+      }
     });
     const activeProjects = await prisma.project.count({
       where: {
         workspaceId: workspace.id,
         status: {
           notIn: ["PAUSED", "COMPLETED", "ARCHIVED"]
-        }
+        },
+        ...(projectFilter ? { AND: [projectFilter] } : {})
       }
     });
 
     // To count tasks in a workspace, we query tasks that belong to projects of that workspace
     const totalTasks = await prisma.task.count({
-      where: { project: { workspaceId: workspace.id } }
+      where: { 
+        project: { workspaceId: workspace.id },
+        ...(taskFilter ? { AND: [taskFilter] } : {})
+      }
     });
     const completedTasks = await prisma.task.count({
       where: {
         project: { workspaceId: workspace.id },
         status: {
           in: ["DEPLOYED", "COMPLETED"]
-        }
+        },
+        ...(taskFilter ? { AND: [taskFilter] } : {})
       }
     });
 
     const totalClients = await prisma.client.count({
-      where: { workspaceId: workspace.id }
+      where: { 
+        workspaceId: workspace.id,
+        // Optional: filter clients to only those belonging to allowed projects if strictly needed
+      }
     });
 
     const loggedHoursSum = await prisma.task.aggregate({
-      where: { project: { workspaceId: workspace.id } },
+      where: { 
+        project: { workspaceId: workspace.id },
+        ...(taskFilter ? { AND: [taskFilter] } : {})
+      },
       _sum: { loggedHs: true }
     });
     const totalLoggedHours = loggedHoursSum._sum?.loggedHs || 0;
 
     const financialIncomeSum = await prisma.financialRecord.aggregate({
-      where: { workspaceId: workspace.id, type: "INCOME" },
+      where: { 
+        workspaceId: workspace.id, 
+        type: "INCOME",
+        // Project level filtering could be applied if FinancialRecord was linked to projects
+      },
       _sum: { amount: true }
     });
-    const totalIncome = financialIncomeSum._sum?.amount || 0;
+    const totalIncome = (role === "ADMIN" || role === "MANAGER" || (user as any)?.role === "SUPER_ADMIN") ? (financialIncomeSum._sum?.amount || 0) : 0;
 
     const taskProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -71,7 +91,9 @@ export async function getDashboardMetrics() {
 
 export async function getDashboardData() {
   try {
-    const { workspace } = await getCurrentWorkspace();
+    const { workspace, user, member, role } = await getCurrentWorkspace();
+    const projectFilter = getProjectAccessFilter(user, member, role);
+    const taskFilter = getTaskAccessFilter(user, member, role);
 
     const [
       recentProjects,
@@ -83,7 +105,10 @@ export async function getDashboardData() {
       // Proyectos Recientes
       prisma.project.findMany({
         take: 4,
-        where: { workspaceId: workspace.id },
+        where: { 
+          workspaceId: workspace.id,
+          ...(projectFilter ? { AND: [projectFilter] } : {})
+        },
         orderBy: { updatedAt: "desc" },
         include: {
           client: true,
@@ -103,7 +128,8 @@ export async function getDashboardData() {
         take: 4,
         where: {
           project: { workspaceId: workspace.id },
-          status: { notIn: ["COMPLETED", "ARCHIVED"] }
+          status: { notIn: ["COMPLETED", "ARCHIVED"] },
+          ...(taskFilter ? { AND: [taskFilter] } : {})
         },
         orderBy: [
           { priority: "desc" },
@@ -118,24 +144,28 @@ export async function getDashboardData() {
       // Servidores
       prisma.serverInstance.findMany({
         take: 4,
-        where: { workspaceId: workspace.id },
+        where: { 
+          workspaceId: workspace.id,
+          ...(projectFilter ? { project: projectFilter } : {})
+        },
         orderBy: { updatedAt: "desc" },
         include: { project: true }
       }),
 
-      // Actividad Reciente (User actions in projects of this workspace - approximation via users for now)
-      prisma.auditLog.findMany({
+      // Actividad Reciente 
+      (role === "ADMIN" || role === "MANAGER" || (user as any)?.role === "SUPER_ADMIN") ? prisma.auditLog.findMany({
         take: 5,
         orderBy: { timestamp: "desc" },
         include: { user: true }
-        // In a strict implementation, AuditLog should have a workspaceId. We'll fetch all for the current user's workspace users.
-        // Assuming we keep AuditLog simple for now, or we can filter by users in this workspace.
-      }),
+      }) : Promise.resolve([]),
 
       // Distribución de Proyectos (Agrupado por estado)
       prisma.project.groupBy({
         by: ['status'],
-        where: { workspaceId: workspace.id },
+        where: { 
+          workspaceId: workspace.id,
+          ...(projectFilter ? { AND: [projectFilter] } : {})
+        },
         _count: {
           status: true
         }

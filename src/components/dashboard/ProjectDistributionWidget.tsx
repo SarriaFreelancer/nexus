@@ -23,7 +23,7 @@ export const ProjectDistributionWidget: React.FC<ProjectDistributionWidgetProps>
   });
 
   return (
-    <div className="p-5 rounded-2xl bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700/80 transition-all flex flex-col justify-between h-full">
+    <div className="p-5 rounded-2xl bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700/80 transition-all flex flex-col h-fit">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
           <PieChart className="h-4 w-4 text-indigo-400" /> Distribución de Proyectos

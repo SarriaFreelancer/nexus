@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { getCurrentUser, getCurrentWorkspace, hasPermission } from "@/lib/serverAuth";
+import { getCurrentUser, getCurrentWorkspace, hasPermission, getProjectAccessFilter } from "@/lib/serverAuth";
 import { recordProjectEvent } from "./projectEventActions";
 import { recordAuditLog } from "./auditActions";
 
@@ -13,10 +13,13 @@ import { recordAuditLog } from "./auditActions";
 export async function getProjects() {
   try {
     const { workspace, role, user, member } = await getCurrentWorkspace();
-    const isFullAdmin = role === "ADMIN" || (user as any)?.role === "SUPER_ADMIN";
+    const projectFilter = getProjectAccessFilter(user, member, role);
 
-    let projects = await prisma.project.findMany({
-      where: { workspaceId: workspace.id },
+    const projects = await prisma.project.findMany({
+      where: { 
+        workspaceId: workspace.id,
+        ...(projectFilter ? { AND: [projectFilter] } : {})
+      },
       include: {
         client: true,
         workspace: {
@@ -33,23 +36,6 @@ export async function getProjects() {
       },
       orderBy: { createdAt: "desc" },
     });
-
-    if (!isFullAdmin && member) {
-      let allowedIds: string[] = [];
-      try {
-        const raw = member.allowedProjectIds;
-        allowedIds = Array.isArray(raw) ? (raw as string[]) : typeof raw === "string" ? JSON.parse(raw) : [];
-      } catch (e) {
-        allowedIds = [];
-      }
-
-      const userId = (user as any)?.id;
-
-      // Filtrar para que el colaborador SOLO vea los proyectos compartidos explícitamente por ID
-      projects = projects.filter((p) => 
-        allowedIds.includes(p.id) || p.tasks.some((t: any) => t.assigneeId === userId)
-      );
-    }
 
     return { success: true, data: projects };
   } catch (error: any) {
@@ -297,7 +283,7 @@ export async function createProject(data: {
       }
     }
 
-    await recordProjectEvent(newProject.id, "PROJECT_CREATED", `Se creó el proyecto ${newProject.name} (${newProject.code})`);
+    await recordProjectEvent(newProject.id, userId, "PROJECT_CREATED", `Se creó el proyecto ${newProject.name} (${newProject.code})`);
     await recordAuditLog(userId, "CREATE_PROJECT", `Creó el proyecto ${newProject.name}`, `Categoría: ${newProject.category}`);
 
     revalidatePath("/proyectos");
@@ -348,7 +334,7 @@ export async function updateProject(id: string, data: Partial<{
     });
 
     if (data.status && data.status !== existing.status) {
-      await recordProjectEvent(id, "STATUS_CHANGE", `Cambió el estado del proyecto de ${existing.status} a ${data.status}`);
+      await recordProjectEvent(id, userId, "STATUS_CHANGE", `Cambió el estado del proyecto de ${existing.status} a ${data.status}`);
     }
 
     await recordAuditLog(userId, "UPDATE_PROJECT", `Actualizó el proyecto ${updatedProject.name}`, `Campos actualizados: ${Object.keys(data).join(", ")}`);

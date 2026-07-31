@@ -531,7 +531,26 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                         {/* Event Content */}
                         <div className="pt-0.5">
                           <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                            {evt.type === 'STATUS_CHANGE' ? 'Estado actualizado' : evt.type === 'CREATED' ? 'Proyecto creado' : evt.content}
+                            {(() => {
+                              if (evt.type === 'STATUS_CHANGE') return 'Estado de proyecto actualizado';
+                              if (evt.type === 'CREATED') return 'Proyecto creado';
+                              if (evt.type === 'MEMBER_ADDED' || evt.type === 'MEMBER') return 'Nuevo Colaborador';
+                              if (evt.type === 'TASK_ADDED') return 'Nueva Tarea';
+                              if (evt.type === 'TASK_UPDATED') return 'Tarea Actualizada';
+                              if (evt.type === 'COMMENT') return 'Nuevo Comentario';
+                              if (evt.type === 'TASK_STATUS') {
+                                let details = evt.details;
+                                if (typeof details === 'string') {
+                                  try { details = JSON.parse(details); } catch(e){}
+                                }
+                                if (details) {
+                                  const status = details.after || details.newStatus;
+                                  if (status === 'COMPLETED' || details.automated) return 'Tarea Completada';
+                                }
+                                return 'Estado de Tarea Actualizado';
+                              }
+                              return 'Actividad';
+                            })()}
                           </h4>
                           <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug max-w-sm">
                             {(() => {
@@ -541,7 +560,7 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                                   try { details = JSON.parse(details); } catch(e){}
                                 }
                                 if (details && details.before && details.after) {
-                                  const translate = (st: string) => st === "DEVELOPMENT" ? "En Desarrollo" : st === "DESIGN" ? "En Diseño" : st === "TESTING" ? "En Pruebas" : st === "DEPLOYED" ? "En Producción" : st === "ARCHIVED" ? "Finalizado" : st === "DISCOVERY" ? "Descubrimiento" : st;
+                                  const translate = (st: string) => st === "DEVELOPMENT" ? "En Desarrollo" : st === "DESIGN" ? "En Diseño" : st === "TESTING" ? "En Pruebas" : st === "DEPLOYED" ? "En Producción" : st === "ARCHIVED" ? "Finalizado" : st === "DISCOVERY" ? "Descubrimiento" : st === "COMPLETED" ? "Completado" : st === "PAUSED" ? "En Pausa" : st === "MAINTENANCE" ? "Mantenimiento" : st;
                                   return `El estado del proyecto cambió de ${translate(details.before)} a ${translate(details.after)}.`;
                                 }
                               }

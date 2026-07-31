@@ -6,9 +6,9 @@ import { Navbar } from "@/components/layout/Navbar";
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isPublicAuthPage = pathname === "/login" || pathname === "/register";
+  const isPublicPage = pathname === "/" || pathname === "/login" || pathname === "/register";
 
-  if (isPublicAuthPage) {
+  if (isPublicPage) {
     return <>{children}</>;
   }
 

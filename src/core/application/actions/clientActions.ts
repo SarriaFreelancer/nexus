@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-import { getCurrentWorkspace, hasPermission } from "@/lib/serverAuth";
+import { getCurrentWorkspace, hasPermission, getProjectAccessFilter } from "@/lib/serverAuth";
 import { recordAuditLog } from "./auditActions";
 
 // ==========================================
@@ -11,9 +11,14 @@ import { recordAuditLog } from "./auditActions";
 // ==========================================
 export async function getClients() {
   try {
-    const { workspace } = await getCurrentWorkspace();
+    const { workspace, user, member, role } = await getCurrentWorkspace();
+    const projectFilter = getProjectAccessFilter(user, member, role);
+    
     const clients = await prisma.client.findMany({
-      where: { workspaceId: workspace.id },
+      where: { 
+        workspaceId: workspace.id,
+        ...(projectFilter ? { projects: { some: projectFilter } } : {})
+      },
       include: {
         projects: true,
       },
