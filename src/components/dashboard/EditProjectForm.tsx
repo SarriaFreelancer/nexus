@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { quickCreateTask, toggleTaskCompletion, moveTaskStatus } from "@/core/application/actions/taskActions";
 import { getWorkspaceTaskStatuses } from "@/core/application/actions/taskStatusActions";
+import { AvatarGroup } from "@/components/ui/AvatarGroup";
 
 export function EditProjectForm({ project, onSuccess, onCancel }: { project: any, onSuccess: (shouldClose?: boolean) => void, onCancel: () => void }) {
   const [loading, setLoading] = useState(false);
@@ -70,7 +71,8 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
     try {
       const res = await updateProject(project.id, data as any);
       if (res.success) {
-        onSuccess();
+        await fetchEvents();
+        onSuccess(true);
       } else {
         setError(res.error || "Error al actualizar proyecto");
       }
@@ -611,7 +613,9 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                 <Users className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[11px] text-slate-500 font-medium">Creado por</p>
-                  <p className="text-[13px] text-slate-700 dark:text-slate-300">David Sarria</p>
+                  <p className="text-[13px] text-slate-700 dark:text-slate-300">
+                    {project.client?.contactName || (project.tasks?.find((t: any) => t.assignee)?.assignee?.name) || "Administrador del Espacio"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -647,15 +651,42 @@ export function EditProjectForm({ project, onSuccess, onCancel }: { project: any
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800/60">
-                <span className="text-[12px] text-slate-500">Colaboradores</span>
-                <div className="flex items-center">
-                  <span className="text-[13px] text-slate-700 dark:text-slate-300 font-bold mr-2">1</span>
-                  <div className="flex -space-x-2">
-                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent('David Sarria')}&background=random`} className="w-6 h-6 rounded-full border-2 border-white dark:border-[#13182b]" />
+              {(() => {
+                const projectCollaborators: any[] = [];
+                if (project.tasks && Array.isArray(project.tasks)) {
+                  project.tasks.forEach((t: any) => {
+                    if (t.assignee && !projectCollaborators.some((m) => m.id === t.assignee.id)) {
+                      projectCollaborators.push(t.assignee);
+                    }
+                  });
+                }
+                if (project.workspace?.members && Array.isArray(project.workspace.members)) {
+                  project.workspace.members.forEach((wm: any) => {
+                    let allowedIds: string[] = [];
+                    try {
+                      const raw = wm.allowedProjectIds;
+                      allowedIds = Array.isArray(raw) ? raw : typeof raw === "string" ? JSON.parse(raw) : [];
+                    } catch (e) {
+                      allowedIds = [];
+                    }
+                    const isAllowedForThisProject = wm.role === "ADMIN" || allowedIds.includes(project.id);
+                    if (isAllowedForThisProject && wm.user && !projectCollaborators.some((m) => m.id === wm.user.id)) {
+                      projectCollaborators.push(wm.user);
+                    }
+                  });
+                }
+                return (
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800/60">
+                    <span className="text-[12px] text-slate-500">Colaboradores</span>
+                    <div className="flex items-center">
+                      <span className="text-[13px] text-slate-700 dark:text-slate-300 font-bold mr-2">
+                        {projectCollaborators.length > 0 ? projectCollaborators.length : 1}
+                      </span>
+                      <AvatarGroup users={projectCollaborators.length > 0 ? projectCollaborators : [{ id: 'admin', name: 'Administrador' }]} limit={3} />
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
 
               <div>
                 <div className="flex justify-between text-[12px] mb-1.5">

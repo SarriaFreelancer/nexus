@@ -32,9 +32,9 @@ export async function registerUser(data: {
     // Encriptar contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Determinar si es el primer usuario del sistema
+    // Determinar si es el primer usuario del sistema (Super Admin) o usuario estándar
     const userCount = await prisma.user.count();
-    const globalRole = userCount === 0 ? "SUPER_ADMIN" : "SUPER_ADMIN"; // Asignar permisos completos
+    const globalRole = userCount === 0 || cleanEmail === "superadmin@nexus.com" ? "SUPER_ADMIN" : "USER";
 
     // 1. Crear usuario
     const newUser = await prisma.user.create({
@@ -47,7 +47,7 @@ export async function registerUser(data: {
       },
     });
 
-    // 2. Crear Workspace (usando el campo Empresa o "Espacio de [Nombre]")
+    // 2. Crear su Espacio de Trabajo en Plan FREE donde es ADMIN
     const workspaceName = company?.trim() || `Espacio de ${name.trim()}`;
     const slug = `${workspaceName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now().toString().slice(-4)}`;
 
@@ -55,10 +55,14 @@ export async function registerUser(data: {
       data: {
         name: workspaceName,
         slug: slug,
+        subscriptionPlan: "FREE",
+        maxWorkspaces: 2,
+        maxProjects: 3,
+        maxCollaborators: 5
       },
     });
 
-    // 3. Crear relación WorkspaceMember como ADMIN
+    // 3. Asignar rol ADMIN en su espacio de trabajo
     await prisma.workspaceMember.create({
       data: {
         userId: newUser.id,
@@ -67,15 +71,7 @@ export async function registerUser(data: {
       },
     });
 
-    return {
-      success: true,
-      data: {
-        userId: newUser.id,
-        email: newUser.email,
-        workspaceId: newWorkspace.id,
-        workspaceName: newWorkspace.name,
-      },
-    };
+    return { success: true, message: "Usuario y Espacio de Trabajo registrados exitosamente como ADMIN (Plan Free)." };
   } catch (error: any) {
     console.error("Error al registrar usuario:", error);
     return { success: false, error: error.message || "Error al procesar el registro" };

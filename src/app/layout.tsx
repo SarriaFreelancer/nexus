@@ -20,20 +20,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning className="h-full">
+    <html lang="es" suppressHydrationWarning className="h-full dark">
+      <head />
       <body suppressHydrationWarning className="h-full bg-white dark:bg-[#0b0e1a] text-slate-900 dark:text-slate-100 antialiased flex overflow-hidden transition-colors duration-300">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={true}
-          disableTransitionOnChange
-        >
-          <SessionProvider>
+        <SessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem={false}
+            disableTransitionOnChange
+          >
             <ConditionalLayout>
               {children}
             </ConditionalLayout>
-          </SessionProvider>
-        </ThemeProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

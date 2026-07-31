@@ -5,9 +5,6 @@ import { prisma } from "./prisma";
 
 export async function getCurrentUser() {
   const session = await getServerSession(authOptions);
-  if (session?.user) {
-    (session.user as any).role = "SUPER_ADMIN";
-  }
   return session?.user;
 }
 
@@ -17,6 +14,21 @@ export async function getCurrentWorkspace() {
     throw new Error("UNAUTHORIZED");
   }
 
+  const userId = (user as any).id;
+  const userEmail = (user as any).email;
+
+  // Buscar usuario en base de datos por ID o Email de forma segura
+  const dbUser = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { id: userId },
+        ...(userEmail ? [{ email: userEmail }] : [])
+      ]
+    }
+  });
+
+  const effectiveUserId = dbUser ? dbUser.id : userId;
+
   const cookieStore = await cookies();
   const activeWorkspaceId = cookieStore.get("active_workspace_id")?.value;
 
@@ -24,56 +36,54 @@ export async function getCurrentWorkspace() {
 
   if (activeWorkspaceId) {
     membership = await prisma.workspaceMember.findFirst({
-      where: { userId: (user as any).id, workspaceId: activeWorkspaceId },
+      where: { userId: effectiveUserId, workspaceId: activeWorkspaceId },
       include: { workspace: true },
     });
   }
 
   if (!membership) {
     membership = await prisma.workspaceMember.findFirst({
-      where: { userId: (user as any).id },
+      where: { userId: effectiveUserId },
       include: { workspace: true },
     });
+
+    if (membership) {
+      try {
+        cookieStore.set("active_workspace_id", membership.workspaceId, { path: "/" });
+      } catch (e) {
+        // Ignore cookie write errors during RSC render
+      }
+    }
   }
 
   if (!membership) {
-    if ((user as any).role === "SUPER_ADMIN") {
-      // Ensure user exists in database first to satisfy FK constraint
-      await prisma.user.upsert({
-        where: { id: (user as any).id },
-        update: {},
-        create: {
-          id: (user as any).id,
-          email: (user as any).email || "admin@nexus.com",
-          name: (user as any).name || "Admin User",
-          globalRole: "SUPER_ADMIN",
-        }
-      });
+    // Si el usuario no tiene ninguna membresía, se genera su espacio personal
+    const newWorkspace = await prisma.workspace.create({
+      data: {
+        name: `Espacio de ${(user as any).name || 'Trabajo'}`,
+        slug: `espacio-${effectiveUserId.substring(0, 8)}-${Date.now().toString().slice(-4)}`,
+        subscriptionPlan: "FREE",
+      }
+    });
 
-      // Auto-create a default workspace for super admin to prevent lockouts
-      const newWorkspace = await prisma.workspace.create({
-        data: {
-          name: "Default Workspace",
-          slug: "default-workspace-" + Date.now(),
-        }
-      });
-      membership = await prisma.workspaceMember.create({
-        data: {
-          userId: (user as any).id,
-          workspaceId: newWorkspace.id,
-          role: "ADMIN"
-        },
-        include: { workspace: true }
-      });
-    } else {
-      throw new Error("NO_WORKSPACE_FOUND");
-    }
+    membership = await prisma.workspaceMember.create({
+      data: {
+        userId: effectiveUserId,
+        workspaceId: newWorkspace.id,
+        role: "ADMIN"
+      },
+      include: { workspace: true }
+    });
+
+    try {
+      cookieStore.set("active_workspace_id", newWorkspace.id, { path: "/" });
+    } catch (e) {}
   }
 
   return {
     workspace: membership.workspace,
     role: membership.role,
-    user: user,
+    user: dbUser || user,
     member: membership
   };
 }

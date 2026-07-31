@@ -15,7 +15,8 @@ import {
   Bell,
   Settings,
   ShieldAlert,
-  Users as UsersCore
+  Users as UsersCore,
+  Crown
 } from "lucide-react";
 
 export interface NavItem {
@@ -24,6 +25,7 @@ export interface NavItem {
   icon: any;
   badge?: number;
   allowedRoles?: string[];
+  isSuperAdminOnly?: boolean;
 }
 
 export const navigationItems: NavItem[] = [
@@ -40,7 +42,8 @@ export const navigationItems: NavItem[] = [
   { title: "Finanzas", href: "/finanzas", icon: DollarSign, allowedRoles: ["ADMIN", "COMMERCIAL"] },
   { title: "Reportes", href: "/reportes", icon: BarChart3, allowedRoles: ["ADMIN", "MANAGER", "COMMERCIAL"] },
   { title: "IA Assistant", href: "/ia-assistant", icon: Bot },
-  { title: "Usuarios", href: "/usuarios", icon: UsersCore, allowedRoles: ["ADMIN"] },
+  { title: "Colaboradores", href: "/colaboradores", icon: UsersCore, allowedRoles: ["ADMIN", "MANAGER"] },
+  { title: "Panel SuperAdmin", href: "/superadmin", icon: Crown, isSuperAdminOnly: true },
   { title: "Auditoría", href: "/auditoria", icon: ShieldAlert, allowedRoles: ["ADMIN"] },
   { title: "Notificaciones", href: "/notificaciones", icon: Bell },
   { title: "Configuración", href: "/configuracion", icon: Settings, allowedRoles: ["ADMIN", "MANAGER"] },

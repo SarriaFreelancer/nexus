@@ -7,18 +7,23 @@ interface AvatarGroupProps {
 }
 
 export const AvatarGroup: React.FC<AvatarGroupProps> = ({ users, limit = 3 }) => {
-  const visibleUsers = users.slice(0, limit);
-  const extraCount = users.length - limit;
+  // Deduplicate users by ID to guarantee unique React keys
+  const uniqueUsers = Array.from(
+    new Map((users || []).map((u, i) => [u?.id || `user-${i}`, u])).values()
+  );
+
+  const visibleUsers = uniqueUsers.slice(0, limit);
+  const extraCount = uniqueUsers.length - limit;
 
   return (
     <div className="flex items-center -space-x-2 overflow-hidden">
-      {visibleUsers.map((user) => (
+      {visibleUsers.map((user, idx) => (
         <img
-          key={user.id}
+          key={user.id ? `${user.id}-${idx}` : `avatar-${idx}`}
           className="inline-block h-6 w-6 rounded-full ring-2 ring-slate-900 object-cover"
-          src={user.avatarUrl || `https://i.pravatar.cc/150?u=${encodeURIComponent(user.name)}`}
-          alt={user.name}
-          title={user.name}
+          src={user.avatarUrl || `https://i.pravatar.cc/150?u=${encodeURIComponent(user.name || "user")}`}
+          alt={user.name || "User"}
+          title={user.name || "User"}
         />
       ))}
       {extraCount > 0 && (

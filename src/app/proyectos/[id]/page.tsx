@@ -25,11 +25,14 @@ export default function ProjectDetail() {
       getProjectById(id).then(res => {
         if (res.success && res.data) {
           setProject(res.data);
+        } else if ((res as any).requiresJoin && (res as any).projectId) {
+          router.push(`/proyectos/unirse?projectId=${(res as any).projectId}`);
+          return;
         }
         setIsLoading(false);
       });
     }
-  }, [id]);
+  }, [id, router]);
 
   if (isLoading) {
     return (

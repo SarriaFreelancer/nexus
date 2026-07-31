@@ -14,7 +14,7 @@ export default function ConfiguracionPage() {
     setIsSeeding(true);
     setMessage(null);
     const result = await seedTestData();
-    setMessage({ type: result.success ? "success" : "error", text: result.message });
+    setMessage({ type: result.success ? "success" : "error", text: result.message || result.error || "Semilla ejecutada" });
     setIsSeeding(false);
   };
 
@@ -23,7 +23,7 @@ export default function ConfiguracionPage() {
     setIsClearing(true);
     setMessage(null);
     const result = await clearTestData();
-    setMessage({ type: result.success ? "success" : "error", text: result.message });
+    setMessage({ type: result.success ? "success" : "error", text: result.error || "Datos limpiados correctamente" });
     setIsClearing(false);
   };
 

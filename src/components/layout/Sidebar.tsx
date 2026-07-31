@@ -48,7 +48,7 @@ export const Sidebar: React.FC = () => {
         setUnreadNotifCount(res.data.filter((n: any) => !n.isRead).length);
       }
     });
-  }, []);
+  }, [pathname]);
 
   const activeWorkspace = workspaces.find((w) => w.isActive) || workspaces[0];
 
@@ -214,9 +214,19 @@ export const Sidebar: React.FC = () => {
 
       {/* Navigation Links */}
       <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
-        {navigationItems.filter(item => !item.allowedRoles || item.allowedRoles.includes(mockCurrentUser.role)).map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-          const Icon = item.icon;
+        {(() => {
+          const isSuperAdmin = session?.user?.email === "superadmin@nexus.com" || (session?.user as any)?.role === "SUPER_ADMIN";
+          const userWorkspaceRole = activeWorkspace?.role || (session?.user as any)?.role || "ADMIN";
+
+          return navigationItems.filter(item => {
+            if (item.isSuperAdminOnly) {
+              return isSuperAdmin;
+            }
+            if (!item.allowedRoles) return true;
+            return item.allowedRoles.includes(userWorkspaceRole) || isSuperAdmin;
+          }).map((item) => {
+            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+            const Icon = item.icon;
 
           return (
             <Link
@@ -246,7 +256,8 @@ export const Sidebar: React.FC = () => {
               )}
             </Link>
           );
-        })}
+        });
+        })()}
       </nav>
 
       {/* Bottom Profile & Toggle */}

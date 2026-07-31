@@ -42,6 +42,13 @@ enum Priority {
   URGENT
 }
 
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  INTERMEDIATE
+  PREMIUM
+}
+
 enum TaskStatus {
   DISCOVERY
   DESIGN
@@ -87,12 +94,16 @@ model Notification {
 }
 
 model Workspace {
-  id          String            @id @default(uuid())
-  name        String
-  slug        String            @unique
-  logoUrl     String?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id                String            @id @default(uuid())
+  name              String
+  slug              String            @unique
+  logoUrl           String?
+  subscriptionPlan  SubscriptionPlan  @default(FREE)
+  maxWorkspaces     Int               @default(2)
+  maxProjects       Int               @default(3)
+  maxCollaborators  Int               @default(5)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
   members     WorkspaceMember[]
   clients     Client[]
   projects    Project[]
@@ -102,12 +113,13 @@ model Workspace {
 }
 
 model WorkspaceMember {
-  id          String        @id @default(uuid())
-  workspaceId String
-  userId      String
-  role        WorkspaceRole @default(DEVELOPER)
-  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String        @id @default(uuid())
+  workspaceId       String
+  userId            String
+  role              WorkspaceRole @default(DEVELOPER)
+  allowedProjectIds Json?         @default("[]")
+  workspace         Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, userId])
 }

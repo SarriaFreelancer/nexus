@@ -12,8 +12,22 @@ export async function getUserWorkspaces() {
       return { success: false, error: "UNAUTHORIZED" };
     }
 
+    const userId = (user as any).id;
+    const userEmail = (user as any).email;
+
+    const dbUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { id: userId },
+          ...(userEmail ? [{ email: userEmail }] : [])
+        ]
+      }
+    });
+
+    const effectiveUserId = dbUser ? dbUser.id : userId;
+
     const memberships = await prisma.workspaceMember.findMany({
-      where: { userId: (user as any).id },
+      where: { userId: effectiveUserId },
       include: { workspace: true },
       orderBy: { workspace: { createdAt: "desc" } },
     });
