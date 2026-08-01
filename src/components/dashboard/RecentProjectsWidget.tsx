@@ -32,7 +32,33 @@ export const RecentProjectsWidget: React.FC<RecentProjectsWidgetProps> = ({ proj
           }
 
           // Parse team
-          const teamMembers = proj.workspace?.members?.map((m: any) => m.user) || [];
+          const teamMembers = (() => {
+            if (proj.team && proj.team.length > 0) return proj.team;
+            const members: any[] = [];
+            if (proj.tasks && Array.isArray(proj.tasks)) {
+              proj.tasks.forEach((t: any) => {
+                if (t.assignee && !members.some((m) => m.id === t.assignee.id)) {
+                  members.push(t.assignee);
+                }
+              });
+            }
+            if (proj.workspace?.members && Array.isArray(proj.workspace.members)) {
+              proj.workspace.members.forEach((wm: any) => {
+                let allowedIds: string[] = [];
+                try {
+                  const raw = wm.allowedProjectIds;
+                  allowedIds = Array.isArray(raw) ? raw : typeof raw === "string" ? JSON.parse(raw) : [];
+                } catch (e) {
+                  allowedIds = [];
+                }
+                const isAllowedForThisProject = wm.role === "ADMIN" || allowedIds.includes(proj.id);
+                if (isAllowedForThisProject && wm.user && !members.some((m) => m.id === wm.user.id)) {
+                  members.push(wm.user);
+                }
+              });
+            }
+            return members;
+          })();
 
           return (
             <div

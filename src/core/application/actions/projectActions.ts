@@ -307,6 +307,8 @@ export async function updateProject(id: string, data: Partial<{
   estimatedHours: number;
   clientId: string;
   technologies: any;
+  startDate: Date | null;
+  endDate: Date | null;
 }>) {
   try {
     const { workspace, role, user } = await getCurrentWorkspace();
@@ -330,6 +332,8 @@ export async function updateProject(id: string, data: Partial<{
         ...(data.technologies !== undefined && { 
           technologies: typeof data.technologies === "string" ? data.technologies : JSON.stringify(data.technologies) 
         }),
+        ...(data.startDate !== undefined && { startDate: data.startDate }),
+        ...(data.endDate !== undefined && { endDate: data.endDate }),
       },
     });
 
