@@ -190,6 +190,17 @@ model ProjectVersion {
   changelog   String   @db.Text
   releaseDate DateTime
   isCurrent   Boolean  @default(false)
+  branch      String?  // Git branch name (e.g., main, develop)
+  commitHash  String?  // Commit SHA associated with this version
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+  id          String   @id @default(uuid())
+  projectId   String
+  version     String
+  title       String
+  changelog   String   @db.Text
+  releaseDate DateTime
+  isCurrent   Boolean  @default(false)
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tasks       Task[]
 }

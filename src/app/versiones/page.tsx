@@ -1,30 +1,22 @@
 import React from "react";
-import { Tag, Plus, GitCommit, Calendar, CheckCircle2, ArrowRight } from "lucide-react";
+import { Tag, GitCommit, Calendar, CheckCircle2 } from "lucide-react";
 import { getVersions } from "@/core/application/actions/versionActions";
+import { getProjects } from "@/core/application/actions/projectActions";
 import { Badge } from "@/components/ui/Badge";
+import { VersionesHeader } from "./VersionesHeader";
+import { EditVersionButton } from "@/components/dashboard/EditVersionButton";
 
 export default async function VersionesPage() {
   const result = await getVersions();
   const versionsList = result.data || [];
+  
+  const projectsRes = await getProjects();
+  const projectsList = projectsRes.data || [];
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Tag className="h-5 w-5 text-indigo-400" /> Control de Versiones SemVer
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            Historial de releases (SemVer 2.0.0), changelogs automáticos y commits vinculados por proyecto.
-          </p>
-        </div>
-
-        <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all self-start">
-          <Plus className="h-4 w-4" />
-          <span>Crear Nueva Versión</span>
-        </button>
-      </div>
+      <VersionesHeader projects={projectsList} />
 
       {/* Timeline List */}
       <div className="space-y-4">
@@ -53,6 +45,7 @@ export default async function VersionesPage() {
                   <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
                     <Calendar className="h-3.5 w-3.5" /> {new Date(ver.releaseDate).toLocaleDateString()}
                   </span>
+                  <EditVersionButton version={ver} projects={projectsList} />
                 </div>
               </div>
 

@@ -8,6 +8,57 @@ interface RecentActivityWidgetProps {
 }
 
 export const RecentActivityWidget: React.FC<RecentActivityWidgetProps> = ({ activities = [] }) => {
+  const translateAction = (action: string) => {
+    const map: Record<string, string> = {
+      "CREATE_PROJECT": "creó el proyecto",
+      "UPDATE_PROJECT": "actualizó el proyecto",
+      "DELETE_PROJECT": "eliminó el proyecto",
+      "CREATE_TASK": "creó la tarea",
+      "UPDATE_TASK": "actualizó la tarea",
+      "MOVE_TASK": "cambió de estado la tarea",
+      "DELETE_TASK": "eliminó la tarea",
+      "LOGIN": "inició sesión",
+      "LOGOUT": "cerró sesión",
+      "UPDATE_WORKSPACE": "actualizó el espacio de trabajo",
+      "ADD_MEMBER": "agregó un miembro",
+    };
+    return map[action] || action.toLowerCase().replace(/_/g, " ");
+  };
+
+  const translateDetails = (details: string) => {
+    if (!details) return "";
+    let translated = details;
+    
+    if (translated.startsWith("Tarea: ")) {
+      translated = translated.replace("Tarea: ", "");
+    }
+    
+    if (translated.startsWith("Campos actualizados: ")) {
+      translated = translated.replace("Campos actualizados: ", "Editó: ");
+      const fieldMap: Record<string, string> = {
+        "name": "nombre",
+        "code": "código",
+        "description": "descripción",
+        "category": "categoría",
+        "status": "estado",
+        "bannerUrl": "portada",
+        "estimatedHours": "horas",
+        "startDate": "inicio",
+        "endDate": "fin",
+        "technologies": "tecnologías",
+        "priority": "prioridad",
+        "title": "título",
+        "assigneeId": "responsable",
+        "dueDate": "fecha límite"
+      };
+      Object.keys(fieldMap).forEach(key => {
+        translated = translated.replace(new RegExp(`\\b${key}\\b`, 'g'), fieldMap[key]);
+      });
+    }
+    
+    return translated;
+  };
+
   const getIcon = (type: string) => {
     switch (type) {
       case "version":
@@ -50,8 +101,8 @@ export const RecentActivityWidget: React.FC<RecentActivityWidgetProps> = ({ acti
               <div>
                 <p className="text-slate-700 dark:text-slate-300">
                   <span className="font-semibold text-slate-900 dark:text-slate-100">{act.user?.name || "Usuario"}</span>{" "}
-                  {act.action}{" "}
-                  <span className="font-semibold text-indigo-400">{act.details?.target || act.entity}</span>
+                  {translateAction(act.action)}{" "}
+                  <span className="font-semibold text-indigo-500 dark:text-indigo-400">{translateDetails(act.details?.target || act.entity)}</span>
                 </p>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500">
                   {new Date(act.timestamp).toLocaleDateString()}
