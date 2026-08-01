@@ -133,22 +133,50 @@ export const Sidebar: React.FC = () => {
 
             {/* Dropdown Menu */}
             {isDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#0e1324] border border-slate-800 rounded-xl shadow-2xl p-2 z-50 space-y-1">
-                <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Tus Espacios de Trabajo</p>
-                <div className="max-h-48 overflow-y-auto space-y-1">
-                  {workspaces.map((w) => (
-                    <button
-                      key={w.id}
-                      onClick={() => handleSwitch(w.id)}
-                      className={`w-full flex items-center justify-between p-2 rounded-lg text-xs text-left transition-colors cursor-pointer ${
-                        w.isActive ? 'bg-indigo-600/20 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-300 hover:bg-slate-800/60'
-                      }`}
-                    >
-                      <span className="truncate">{w.name}</span>
-                      {w.isActive && <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
-                    </button>
-                  ))}
-                </div>
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#0e1324] border border-slate-800 rounded-xl shadow-2xl p-2 z-50 space-y-1">
+                  <div className="max-h-48 overflow-y-auto space-y-2 custom-scrollbar">
+                    {/* Propios */}
+                    {workspaces.filter(w => w.role === "ADMIN" || w.role === "SUPER_ADMIN").length > 0 && (
+                      <div>
+                        <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Tus Espacios de Trabajo</p>
+                        <div className="space-y-1 mt-1">
+                          {workspaces.filter(w => w.role === "ADMIN" || w.role === "SUPER_ADMIN").map((w) => (
+                            <button
+                              key={w.id}
+                              onClick={() => handleSwitch(w.id)}
+                              className={`w-full flex items-center justify-between p-2 rounded-lg text-xs text-left transition-colors cursor-pointer ${
+                                w.isActive ? 'bg-indigo-600/20 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-300 hover:bg-slate-800/60'
+                              }`}
+                            >
+                              <span className="truncate">{w.name}</span>
+                              {w.isActive && <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Compartidos */}
+                    {workspaces.filter(w => w.role !== "ADMIN" && w.role !== "SUPER_ADMIN").length > 0 && (
+                      <div>
+                        <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Espacios Compartidos</p>
+                        <div className="space-y-1 mt-1">
+                          {workspaces.filter(w => w.role !== "ADMIN" && w.role !== "SUPER_ADMIN").map((w) => (
+                            <button
+                              key={w.id}
+                              onClick={() => handleSwitch(w.id)}
+                              className={`w-full flex items-center justify-between p-2 rounded-lg text-xs text-left transition-colors cursor-pointer ${
+                                w.isActive ? 'bg-indigo-600/20 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-300 hover:bg-slate-800/60'
+                              }`}
+                            >
+                              <span className="truncate">{w.name}</span>
+                              {w.isActive && <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 <button
                   onClick={() => {
                     setIsDropdownOpen(false);
@@ -273,7 +301,7 @@ export const Sidebar: React.FC = () => {
                 <img
                   src={currentUser.avatarUrl}
                   alt={currentUser.name}
-                  className="h-8 w-8 rounded-lg object-cover ring-1 ring-indigo-500/40 shrink-0"
+                  className="h-8 w-8 rounded-full object-cover ring-1 ring-indigo-500/40 shrink-0"
                 />
                 <div className="truncate text-left min-w-0">
                   <p className="text-xs font-semibold text-slate-200 leading-tight truncate">

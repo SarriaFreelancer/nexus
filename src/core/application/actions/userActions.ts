@@ -36,7 +36,7 @@ export async function getWorkspaceUsers() {
           },
           {
             id: "u-2",
-            name: "Ana García",
+            name: "Ana GarcÃ­a",
             email: "ana@sarriatech.com",
             role: "DEVELOPER",
             avatarUrl: "https://i.pravatar.cc/150?u=ana",
@@ -102,7 +102,7 @@ export async function createUser(data: { name: string; email: string; role: stri
     });
 
     const { recordAuditLog } = await import("./auditActions");
-    await recordAuditLog(adminUserId, "CREATE_USER", "Registró un nuevo colaborador / usuario", `Usuario: ${data.name}`, { email: data.email, role: data.role });
+    await recordAuditLog(adminUserId, "CREATE_USER", "RegistrÃ³ un nuevo colaborador / usuario", `Usuario: ${data.name}`, { email: data.email, role: data.role });
 
     return { success: true, data: dbUser };
   } catch (error: any) {
@@ -153,6 +153,20 @@ export async function updateUserPreference(key: string, value: any) {
     });
     
     return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateUserProfile(data: { name?: string; avatarUrl?: string }) {
+  try {
+    const { user } = await getCurrentWorkspace();
+    const userId = (user as any).id;
+    const dbUser = await prisma.user.update({
+      where: { id: userId },
+      data
+    });
+    return { success: true, data: dbUser };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

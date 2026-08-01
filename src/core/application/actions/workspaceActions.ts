@@ -208,9 +208,23 @@ export async function switchActiveWorkspace(workspaceId: string) {
       return { success: false, error: "UNAUTHORIZED" };
     }
 
+    const userId = (user as any).id;
+    const userEmail = (user as any).email;
+
+    const dbUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { id: userId },
+          ...(userEmail ? [{ email: userEmail }] : [])
+        ]
+      }
+    });
+
+    const effectiveUserId = dbUser ? dbUser.id : userId;
+
     // Confirmar que el usuario es miembro de ese workspace
     const membership = await prisma.workspaceMember.findFirst({
-      where: { userId: (user as any).id, workspaceId },
+      where: { userId: effectiveUserId, workspaceId },
       include: { workspace: true },
     });
 

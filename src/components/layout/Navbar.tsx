@@ -73,7 +73,7 @@ export const Navbar: React.FC = () => {
             <img
               src={currentUser.avatarUrl}
               alt={currentUser.name}
-              className="h-8 w-8 rounded-xl object-cover ring-2 ring-indigo-500/40"
+              className="h-8 w-8 rounded-full object-cover ring-2 ring-indigo-500/40"
             />
           </button>
         </div>

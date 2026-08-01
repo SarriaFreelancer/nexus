@@ -34,7 +34,7 @@ export const authOptions: NextAuthOptions = {
                 password: hashedPassword
               }
             });
-            return { id: newUser.id, email: newUser.email, name: newUser.name, role: newUser.globalRole };
+            return { id: newUser.id, email: newUser.email, name: newUser.name, role: newUser.globalRole, avatarUrl: newUser.avatarUrl };
           }
           return null;
         }
@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
         const isPasswordValid = user.password ? await bcrypt.compare(credentials.password, user.password) : false;
         
         if (isPasswordValid) {
-           return { id: user.id, email: user.email, name: user.name, role: user.globalRole || "ADMIN" };
+           return { id: user.id, email: user.email, name: user.name, role: user.globalRole || "ADMIN", avatarUrl: user.avatarUrl };
         }
 
         return null;
@@ -50,10 +50,17 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = (user as any).role || "ADMIN";
         token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.picture = (user as any).avatarUrl;
+      }
+      if (trigger === "update" && session) {
+        if (session.name) token.name = session.name;
+        if (session.picture) token.picture = session.picture;
       }
       return token;
     },
@@ -61,6 +68,8 @@ export const authOptions: NextAuthOptions = {
       if (session?.user) {
         (session.user as any).role = token.role || "ADMIN";
         (session.user as any).id = token.id;
+        if (token.name) session.user.name = token.name;
+        if (token.picture) session.user.image = token.picture as string;
       }
       return session;
     }

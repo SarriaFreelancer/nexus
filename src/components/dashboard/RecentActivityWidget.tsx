@@ -40,11 +40,11 @@ export const RecentActivityWidget: React.FC<RecentActivityWidgetProps> = ({ acti
                 <img
                   src={act.user.avatarUrl}
                   alt={act.user.name}
-                  className="h-7 w-7 rounded-lg object-cover ring-1 ring-slate-800"
+                  className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-800"
                 />
               ) : (
-                <div className="h-7 w-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
-                  {act.user?.name?.charAt(0) || "U"}
+                <div className="h-7 w-7 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
+                  {act.user?.name?.charAt(0).toUpperCase() || "U"}
                 </div>
               )}
               <div>

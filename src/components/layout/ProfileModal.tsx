@@ -1,31 +1,88 @@
 "use client";
 
-import React, { useState } from "react";
-import { signOut } from "next-auth/react";
+import React, { useState, useEffect, useRef } from "react";
+import { signOut, useSession } from "next-auth/react";
 import { Modal } from "@/components/ui/Modal";
 import { User, Mail, Shield, Camera, Loader2, LogOut } from "lucide-react";
 import { mockCurrentUser } from "@/core/infrastructure/mockData";
+import { updateUserProfile } from "@/core/application/actions/userActions";
 
 export function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { data: session, update: updateSession } = useSession();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
-    name: mockCurrentUser.name,
-    email: mockCurrentUser.email,
-    role: mockCurrentUser.role,
-    avatarUrl: mockCurrentUser.avatarUrl
+    name: "",
+    email: "",
+    role: "",
+    avatarUrl: "https://i.pravatar.cc/150"
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        name: session?.user?.name || mockCurrentUser.name,
+        email: session?.user?.email || mockCurrentUser.email,
+        role: (session?.user as any)?.role || mockCurrentUser.role,
+        avatarUrl: (session?.user as any)?.image || mockCurrentUser.avatarUrl
+      });
+      setSuccessMsg("");
+    }
+  }, [isOpen, session]);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      if (!res.ok) throw new Error("Error al subir imagen");
+      
+      const { url } = await res.json();
+      setFormData(prev => ({ ...prev, avatarUrl: url }));
+    } catch (error) {
+      console.error(error);
+      alert("No se pudo subir la imagen");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setSuccessMsg("");
 
-    // Simulate API call to update profile
-    await new Promise(resolve => setTimeout(resolve, 800));
+    const res = await updateUserProfile({
+      name: formData.name,
+      avatarUrl: formData.avatarUrl
+    });
+
+    if (res.success) {
+      await updateSession({ name: formData.name, picture: formData.avatarUrl });
+      setSuccessMsg("Perfil actualizado correctamente");
+    } else {
+      setSuccessMsg("Error al actualizar el perfil");
+    }
     
-    // In a real app with next-auth or a db, we would update the user session here
-    setSuccessMsg("Perfil actualizado correctamente (Simulado)");
     setLoading(false);
     
     setTimeout(() => {
@@ -44,14 +101,21 @@ export function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
         )}
 
         <div className="flex flex-col items-center justify-center gap-3">
-          <div className="relative group cursor-pointer">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept="image/*" 
+            className="hidden" 
+          />
+          <div onClick={handleAvatarClick} className="relative group cursor-pointer">
             <img 
-              src={formData.avatarUrl} 
+              src={formData.avatarUrl || "https://i.pravatar.cc/150"} 
               alt="Avatar" 
-              className="w-20 h-20 rounded-2xl object-cover ring-2 ring-indigo-500/20 shadow-md group-hover:opacity-70 transition-opacity"
+              className={`w-20 h-20 rounded-full object-cover ring-2 ring-indigo-500/20 shadow-md transition-opacity ${uploading ? 'opacity-50' : 'group-hover:opacity-70'}`}
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <Camera className="w-6 h-6 text-white drop-shadow-md" />
+              {uploading ? <Loader2 className="w-6 h-6 text-white drop-shadow-md animate-spin" /> : <Camera className="w-6 h-6 text-white drop-shadow-md" />}
             </div>
           </div>
           <span className="text-[10px] text-slate-500 font-medium">Click para cambiar foto</span>

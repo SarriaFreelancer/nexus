@@ -18,7 +18,7 @@ export function AuditDetailModal({ isOpen, onClose, log }: AuditDetailModalProps
       <div className="space-y-6">
         {/* Header Info */}
         <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
-          <img src={log.user.avatarUrl} alt={log.user.name} className="w-12 h-12 rounded-lg object-cover ring-2 ring-indigo-500/20" />
+          <img src={log.user.avatarUrl} alt={log.user.name} className="w-12 h-12 rounded-full object-cover ring-2 ring-indigo-500/20" />
           <div>
             <h3 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{log.user.name}</h3>
             <p className="text-xs text-slate-500 font-medium">{log.user.email}</p>
