@@ -1,17 +1,39 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import { Tag, GitCommit, Calendar, CheckCircle2 } from "lucide-react";
 import { getVersions } from "@/core/application/actions/versionActions";
 import { getProjects } from "@/core/application/actions/projectActions";
 import { Badge } from "@/components/ui/Badge";
 import { VersionesHeader } from "./VersionesHeader";
 import { EditVersionButton } from "@/components/dashboard/EditVersionButton";
+import CommitListModal from "@/components/dashboard/CommitListModal";
 
-export default async function VersionesPage() {
-  const result = await getVersions();
-  const versionsList = result.data || [];
-  
-  const projectsRes = await getProjects();
-  const projectsList = projectsRes.data || [];
+export default function VersionesPage() {
+  const [versionsList, setVersionsList] = useState<any[]>([]);
+  const [projectsList, setProjectsList] = useState<any[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    async function fetchData() {
+      const vRes = await getVersions();
+      const pRes = await getProjects();
+      setVersionsList(vRes.data || []);
+      setProjectsList(pRes.data || []);
+    }
+    fetchData();
+  }, []);
+
+  const openModal = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedProjectId(null);
+  };
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
@@ -21,9 +43,7 @@ export default async function VersionesPage() {
       {/* Timeline List */}
       <div className="space-y-4">
         {versionsList.map((ver: any) => {
-          // Parse changelog split by newlines if it's a single string
           const changes = typeof ver.changelog === "string" ? ver.changelog.split("\n").filter(Boolean) : [];
-
           return (
             <div
               key={ver.id}
@@ -35,21 +55,39 @@ export default async function VersionesPage() {
                     v{ver.version}
                   </span>
                   <div>
-                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">{ver.project?.name || "Global"}</h3>
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                      {ver.project?.name || "Global"}
+                    </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400">{ver.title}</p>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-3">
                   {ver.isCurrent && <Badge variant="emerald">Versión Actual en Producción</Badge>}
                   <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
                     <Calendar className="h-3.5 w-3.5" /> {new Date(ver.releaseDate).toLocaleDateString()}
                   </span>
+                  {ver.commitHash && ver.project?.gitRepoUrl && (
+                    <a
+                      href={`https://github.com/${ver.project.gitRepoUrl.replace(/^https?:\/\//, "").replace(/\.git$/i, "")}/commit/${ver.commitHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-indigo-500 hover:underline"
+                    >
+                      Ver commit
+                    </a>
+                  )}
+                  {ver.project?.gitRepoUrl && (
+                    <button
+                      onClick={() => openModal(ver.project.id)}
+                      className="text-xs text-indigo-600 hover:underline"
+                    >
+                      Ver últimos commits
+                    </button>
+                  )}
                   <EditVersionButton version={ver} projects={projectsList} />
                 </div>
               </div>
 
-              {/* Changes Log */}
               {changes.length > 0 && (
                 <div className="space-y-2 bg-slate-100 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800/60">
                   <h4 className="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
@@ -75,6 +113,10 @@ export default async function VersionesPage() {
           </div>
         )}
       </div>
+
+      {isModalOpen && selectedProjectId && (
+        <CommitListModal projectId={selectedProjectId} onClose={closeModal} />
+      )}
     </div>
   );
 }

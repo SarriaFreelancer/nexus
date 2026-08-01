@@ -17,6 +17,8 @@ export function CreateVersionModal({ isOpen, onClose, projects }: CreateVersionM
   const [title, setTitle] = useState("");
   const [changelog, setChangelog] = useState("");
   const [isCurrent, setIsCurrent] = useState(true);
+  const [branch, setBranch] = useState("");
+  const [commitHash, setCommitHash] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,7 +37,9 @@ export function CreateVersionModal({ isOpen, onClose, projects }: CreateVersionM
       version,
       title,
       changelog,
-      isCurrent
+      isCurrent,
+      branch,
+      commitHash,
     });
 
     setLoading(false);
@@ -90,6 +94,28 @@ export function CreateVersionModal({ isOpen, onClose, projects }: CreateVersionM
               onChange={(e) => setVersion(e.target.value)}
               className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 text-sm focus:border-indigo-500 focus:outline-none transition-all"
               required
+            />
+            {/* Nueva rama */}
+            <label className="text-slate-700 dark:text-slate-300 font-medium text-xs flex items-center gap-1 mt-2">
+              <GitCommit className="w-3.5 h-3.5" /> Rama (branch)
+            </label>
+            <input
+              type="text"
+              placeholder="ej. main"
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+              className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 text-sm focus:border-indigo-500 focus:outline-none transition-all"
+            />
+            {/* Hash del commit */}
+            <label className="text-slate-700 dark:text-slate-300 font-medium text-xs flex items-center gap-1 mt-2">
+              <GitCommit className="w-3.5 h-3.5" /> Hash del commit
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. a1b2c3d4..."
+              value={commitHash}
+              onChange={(e) => setCommitHash(e.target.value)}
+              className="w-full bg-slate-100/50 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800/60 rounded-xl px-3.5 py-2.5 text-slate-800 dark:text-slate-200 text-sm focus:border-indigo-500 focus:outline-none transition-all"
             />
           </div>
           <div className="space-y-1.5">

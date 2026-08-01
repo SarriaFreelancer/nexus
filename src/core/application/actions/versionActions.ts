@@ -30,6 +30,8 @@ export async function createVersion(data: {
   title: string;
   changelog: string;
   isCurrent: boolean;
+  branch?: string;
+  commitHash?: string;
 }) {
   try {
     const { workspace, user, member, role } = await getCurrentWorkspace();
@@ -60,6 +62,8 @@ export async function createVersion(data: {
         changelog: data.changelog,
         releaseDate: new Date(),
         isCurrent: data.isCurrent,
+        ...(data.branch && { branch: data.branch }),
+        ...(data.commitHash && { commitHash: data.commitHash }),
       }
     });
 
