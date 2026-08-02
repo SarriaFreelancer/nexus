@@ -1,10 +1,15 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || ""
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -95,6 +100,64 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
+        if (!user.email) return false;
+        
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email }
+        });
+
+        if (!existingUser) {
+          const newUser = await prisma.user.create({
+            data: {
+              email: user.email,
+              name: user.name || "Usuario de Google",
+              avatarUrl: user.image,
+              globalRole: "USER",
+            }
+          });
+          user.id = newUser.id;
+          (user as any).role = newUser.globalRole;
+          (user as any).preferences = newUser.preferences;
+          
+          try {
+            await prisma.auditLog.create({
+              data: {
+                userId: newUser.id,
+                action: "LOGIN_SUCCESS",
+                entity: "AUTH",
+                details: { email: newUser.email, provider: "google", registration: true }
+              }
+            });
+          } catch (e) {}
+        } else {
+          user.id = existingUser.id;
+          (user as any).role = existingUser.globalRole;
+          (user as any).preferences = existingUser.preferences;
+          
+          if (!existingUser.avatarUrl && user.image) {
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: { avatarUrl: user.image }
+            });
+          }
+
+          try {
+            await prisma.auditLog.create({
+              data: {
+                userId: existingUser.id,
+                action: "LOGIN_SUCCESS",
+                entity: "AUTH",
+                details: { email: existingUser.email, provider: "google" }
+              }
+            });
+          } catch (e) {}
+        }
+        return true;
+      }
+      return true;
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = (user as any).role || "ADMIN";

@@ -29,11 +29,18 @@ import {
   Smartphone,
 } from "lucide-react";
 
+import { redirect } from "next/navigation";
+
 export const dynamic = "force-dynamic";
 
 export default async function LandingPage() {
   const user = await getCurrentUser();
-  const ctaHref = user ? "/dashboard" : "/login";
+  
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  const ctaHref = "/login";
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased overflow-x-hidden">

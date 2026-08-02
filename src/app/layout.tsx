@@ -7,7 +7,6 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 
 import CookieBannerComponent from "@/components/ui/CookieBanner";
-import GuidedTour from "@/components/dashboard/GuidedTour";
 
 export const metadata: Metadata = {
   title: "SarriaTech Studio | Nexus Enterprise Platform",
@@ -40,7 +39,6 @@ export default function RootLayout({
             <ConditionalLayout>
               {children}
             </ConditionalLayout>
-            <GuidedTour />
             <CookieBannerComponent />
           </ThemeProvider>
         </SessionProvider>

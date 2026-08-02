@@ -413,6 +413,7 @@ export default function RegisterPage() {
             <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
+                onClick={() => signIn("google", { callbackUrl: "/" })}
                 className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-[11px] font-semibold transition-colors ${
                   isDarkMode
                     ? 'bg-[#0d1322] hover:bg-slate-800/80 border-slate-800 text-slate-300'

@@ -8,7 +8,7 @@ export const MetricsHeader: React.FC<{ metrics: any }> = ({ metrics }) => {
   const cards = [
     {
       title: "Proyectos Activos",
-      value: metrics.activeProjects ?? 4,
+      value: metrics.activeProjects ?? 0,
       growth: "+12%",
       icon: FolderKanban,
       iconBg: "bg-[#6366f1]",
@@ -24,7 +24,7 @@ export const MetricsHeader: React.FC<{ metrics: any }> = ({ metrics }) => {
     },
     {
       title: "Tareas en Proceso",
-      value: (metrics.totalTasks ?? 0) - (metrics.completedTasks ?? 0) || 2,
+      value: (metrics.totalTasks ?? 0) - (metrics.completedTasks ?? 0) || 0,
       growth: "+5%",
       icon: CheckSquare,
       iconBg: "bg-[#3b82f6]",
@@ -40,7 +40,7 @@ export const MetricsHeader: React.FC<{ metrics: any }> = ({ metrics }) => {
     },
     {
       title: "Clientes Activos",
-      value: metrics.totalClients ?? 3,
+      value: metrics.totalClients ?? 0,
       growth: "+18%",
       icon: Users,
       iconBg: "bg-[#10b981]",

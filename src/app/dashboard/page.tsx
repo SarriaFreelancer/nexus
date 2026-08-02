@@ -9,6 +9,7 @@ import { ServerStatusWidget } from "@/components/dashboard/ServerStatusWidget";
 import { ProductivityChartWidget } from "@/components/dashboard/ProductivityChartWidget";
 import { SystemAlertsWidget } from "@/components/dashboard/SystemAlertsWidget";
 import { DashboardDateSelector } from "@/components/dashboard/DashboardDateSelector";
+import { QuickActionsWidget } from "@/components/dashboard/QuickActionsWidget";
 import { getDashboardMetrics, getDashboardData, getWeeklyProductivity } from "@/core/application/actions/dashboardActions";
 
 export const dynamic = "force-dynamic";
@@ -48,15 +49,15 @@ export default async function DashboardPage(props: {
       {metrics && <MetricsHeader metrics={metrics} />}
 
       {/* Analytics & Activity Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div>
           <ProjectDistributionWidget data={dashboardData?.projectDistribution} />
         </div>
-        <div className="lg:col-span-2">
+        <div>
           <RecentActivityWidget activities={dashboardData?.recentActivity} />
         </div>
-        <div className="lg:col-span-1">
-          <MiniCalendarWidget />
+        <div>
+          <MiniCalendarWidget events={dashboardData?.calendarEvents} />
         </div>
       </div>
 
@@ -74,6 +75,9 @@ export default async function DashboardPage(props: {
 
       {/* Server Status Telemetry Row */}
       <ServerStatusWidget servers={dashboardData?.servers} />
+
+      {/* Quick Actions */}
+      <QuickActionsWidget />
     </div>
   );
 }

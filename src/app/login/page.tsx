@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, GitFork, Shield, BarChart3, Sun, Moon, ArrowRight, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const reason = searchParams.get("reason");
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
@@ -147,6 +150,12 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
+            
+            {!error && reason === "timeout" && (
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-500 dark:text-amber-400 text-xs rounded-xl text-center font-medium">
+                Tu sesión ha sido cerrada por inactividad.
+              </div>
+            )}
 
             {/* Form Content */}
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -244,6 +253,7 @@ export default function LoginPage() {
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
+                  onClick={() => signIn("google", { callbackUrl: "/" })}
                   className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#0d1322] hover:bg-slate-800/80 border border-slate-800 text-[11px] font-semibold text-slate-300 transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">

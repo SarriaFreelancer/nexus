@@ -112,7 +112,8 @@ export async function getDashboardData(selectedDateStr?: string) {
       upcomingTasks,
       servers,
       recentActivity,
-      projectsDistribution
+      projectsDistribution,
+      rawCalendarEvents
     ] = await Promise.all([
       // Proyectos Recientes
       prisma.project.findMany({
@@ -136,7 +137,7 @@ export async function getDashboardData(selectedDateStr?: string) {
         }
       }),
 
-      // Tareas Próximas
+      // Tareas Próximas (para widget de tareas, tomamos 4)
       prisma.task.findMany({
         take: 4,
         where: {
@@ -171,7 +172,12 @@ export async function getDashboardData(selectedDateStr?: string) {
       (role === "ADMIN" || role === "MANAGER" || (user as any)?.role === "SUPER_ADMIN") ? prisma.auditLog.findMany({
         take: 5,
         where: {
-          timestamp: { lte: targetDate }
+          timestamp: { lte: targetDate },
+          user: {
+            memberships: {
+              some: { workspaceId: workspace.id }
+            }
+          }
         },
         orderBy: { timestamp: "desc" },
         include: { user: true }
@@ -188,6 +194,18 @@ export async function getDashboardData(selectedDateStr?: string) {
         _count: {
           status: true
         }
+      }),
+      // Calendario de eventos: Tareas que no estén completadas, ordenadas por fecha límite
+      prisma.task.findMany({
+        take: 5,
+        where: {
+          project: { workspaceId: workspace.id },
+          status: { notIn: ["COMPLETED", "ARCHIVED"] },
+          dueDate: { not: null },
+          ...(taskFilter ? { AND: [taskFilter] } : {})
+        },
+        orderBy: { dueDate: "asc" },
+        include: { project: true }
       })
     ]);
 
@@ -222,6 +240,22 @@ export async function getDashboardData(selectedDateStr?: string) {
       color: distributionColorMap[item.status] || "#cbd5e1"
     }));
 
+    const formattedCalendarEvents = rawCalendarEvents.map((task: any) => {
+      let color = "#6366f1";
+      if (task.priority === "HIGH") color = "#10b981";
+      if (task.priority === "URGENT") color = "#f59e0b";
+      if (task.status === "COMPLETED" || task.status === "ARCHIVED") color = "#64748b";
+
+      return {
+        id: task.id,
+        title: task.title,
+        date: task.dueDate?.toISOString() || "",
+        projectName: task.project?.name || "",
+        color,
+        status: task.status
+      };
+    });
+
     // Simular Alertas (por ej. si hay servidores con RAM/CPU alta)
     const alerts = servers
       .filter(s => s.cpuUsage > 80 || s.ramUsage > 80)
@@ -240,7 +274,8 @@ export async function getDashboardData(selectedDateStr?: string) {
         servers,
         recentActivity,
         projectDistribution: formattedDistribution,
-        alerts
+        alerts,
+        calendarEvents: formattedCalendarEvents
       }
     };
   } catch (error: any) {
@@ -336,6 +371,53 @@ export async function getWeeklyProductivity(selectedDateStr?: string) {
     return { success: true, data: chartData };
   } catch (error: any) {
     console.error("Error fetching weekly productivity:", error);
+    return { success: false, data: [], error: error.message };
+  }
+}
+
+export async function getFullCalendarEvents(month: number, year: number) {
+  try {
+    const { workspace, user, member, role } = await getCurrentWorkspace();
+    const taskFilter = getTaskAccessFilter(user, member, role);
+    
+    // Rango del mes
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+    const tasks = await prisma.task.findMany({
+      where: {
+        project: { workspaceId: workspace.id },
+        dueDate: {
+          gte: startDate,
+          lte: endDate
+        },
+        ...(taskFilter ? { AND: [taskFilter] } : {})
+      },
+      include: {
+        project: true
+      },
+      orderBy: { dueDate: "asc" }
+    });
+
+    const formattedEvents = tasks.map((task) => {
+      let color = "#6366f1"; // Default indigo
+      if (task.priority === "HIGH") color = "#10b981"; // Emerald
+      if (task.priority === "URGENT") color = "#f59e0b"; // Amber/Orange
+      if (task.status === "COMPLETED" || task.status === "ARCHIVED") color = "#64748b"; // Slate
+
+      return {
+        id: task.id,
+        title: task.title,
+        date: task.dueDate?.toISOString() || "",
+        projectName: task.project.name,
+        color,
+        status: task.status
+      };
+    });
+
+    return { success: true, data: formattedEvents };
+  } catch (error: any) {
+    console.error("Error fetching full calendar events:", error);
     return { success: false, data: [], error: error.message };
   }
 }

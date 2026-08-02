@@ -56,28 +56,47 @@ export async function getCurrentWorkspace() {
     }
   }
 
+  // Use a global map to prevent race conditions when multiple parallel Server Components
+  // trigger getCurrentWorkspace() simultaneously on first login.
+  const globalAny = global as any;
+  if (!globalAny.workspaceCreationLocks) {
+    globalAny.workspaceCreationLocks = new Map<string, Promise<any>>();
+  }
+  const locks = globalAny.workspaceCreationLocks as Map<string, Promise<any>>;
+
   if (!membership) {
-    // Si el usuario no tiene ninguna membresía, se genera su espacio personal
-    const newWorkspace = await prisma.workspace.create({
-      data: {
-        name: `Espacio de ${(user as any).name || 'Trabajo'}`,
-        slug: `espacio-${effectiveUserId.substring(0, 8)}-${Date.now().toString().slice(-4)}`,
-        subscriptionPlan: "FREE",
-      }
-    });
+    if (locks.has(effectiveUserId)) {
+      membership = await locks.get(effectiveUserId);
+    } else {
+      const creationPromise = (async () => {
+        const newWorkspace = await prisma.workspace.create({
+          data: {
+            name: `Espacio de ${(user as any).name || 'Trabajo'}`,
+            slug: `espacio-${effectiveUserId.substring(0, 8)}-${Date.now().toString().slice(-4)}`,
+            subscriptionPlan: "FREE",
+          }
+        });
 
-    membership = await prisma.workspaceMember.create({
-      data: {
-        userId: effectiveUserId,
-        workspaceId: newWorkspace.id,
-        role: "ADMIN"
-      },
-      include: { workspace: true }
-    });
+        const newMembership = await prisma.workspaceMember.create({
+          data: {
+            userId: effectiveUserId,
+            workspaceId: newWorkspace.id,
+            role: "ADMIN"
+          },
+          include: { workspace: true }
+        });
 
-    try {
-      cookieStore.set("active_workspace_id", newWorkspace.id, { path: "/" });
-    } catch (e) {}
+        try {
+          cookieStore.set("active_workspace_id", newWorkspace.id, { path: "/" });
+        } catch (e) {}
+
+        return newMembership;
+      })();
+      
+      locks.set(effectiveUserId, creationPromise);
+      membership = await creationPromise;
+      locks.delete(effectiveUserId);
+    }
   }
 
   return {
