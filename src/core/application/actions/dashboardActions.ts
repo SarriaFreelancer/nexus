@@ -3,21 +3,26 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentWorkspace, getProjectAccessFilter, getTaskAccessFilter } from "@/lib/serverAuth";
 
-export async function getDashboardMetrics() {
+export async function getDashboardMetrics(selectedDateStr?: string) {
   try {
     const { workspace, user, member, role } = await getCurrentWorkspace();
     const projectFilter = getProjectAccessFilter(user, member, role);
     const taskFilter = getTaskAccessFilter(user, member, role);
 
+    let targetDate = selectedDateStr ? new Date(selectedDateStr) : new Date();
+    targetDate.setHours(23, 59, 59, 999);
+    
     const totalProjects = await prisma.project.count({
       where: { 
         workspaceId: workspace.id,
+        createdAt: { lte: targetDate },
         ...(projectFilter ? { AND: [projectFilter] } : {})
       }
     });
     const activeProjects = await prisma.project.count({
       where: {
         workspaceId: workspace.id,
+        createdAt: { lte: targetDate },
         status: {
           notIn: ["PAUSED", "COMPLETED", "ARCHIVED"]
         },
@@ -29,12 +34,14 @@ export async function getDashboardMetrics() {
     const totalTasks = await prisma.task.count({
       where: { 
         project: { workspaceId: workspace.id },
+        createdAt: { lte: targetDate },
         ...(taskFilter ? { AND: [taskFilter] } : {})
       }
     });
     const completedTasks = await prisma.task.count({
       where: {
         project: { workspaceId: workspace.id },
+        updatedAt: { lte: targetDate },
         status: {
           in: ["DEPLOYED", "COMPLETED"]
         },
@@ -52,6 +59,7 @@ export async function getDashboardMetrics() {
     const loggedHoursSum = await prisma.task.aggregate({
       where: { 
         project: { workspaceId: workspace.id },
+        updatedAt: { lte: targetDate },
         ...(taskFilter ? { AND: [taskFilter] } : {})
       },
       _sum: { loggedHs: true }
@@ -61,6 +69,7 @@ export async function getDashboardMetrics() {
     const financialIncomeSum = await prisma.financialRecord.aggregate({
       where: { 
         workspaceId: workspace.id, 
+        date: { lte: targetDate },
         type: "INCOME",
         // Project level filtering could be applied if FinancialRecord was linked to projects
       },
@@ -89,11 +98,14 @@ export async function getDashboardMetrics() {
   }
 }
 
-export async function getDashboardData() {
+export async function getDashboardData(selectedDateStr?: string) {
   try {
     const { workspace, user, member, role } = await getCurrentWorkspace();
     const projectFilter = getProjectAccessFilter(user, member, role);
     const taskFilter = getTaskAccessFilter(user, member, role);
+
+    let targetDate = selectedDateStr ? new Date(selectedDateStr) : new Date();
+    targetDate.setHours(23, 59, 59, 999);
 
     const [
       recentProjects,
@@ -107,6 +119,7 @@ export async function getDashboardData() {
         take: 4,
         where: { 
           workspaceId: workspace.id,
+          updatedAt: { lte: targetDate },
           ...(projectFilter ? { AND: [projectFilter] } : {})
         },
         orderBy: { updatedAt: "desc" },
@@ -128,6 +141,7 @@ export async function getDashboardData() {
         take: 4,
         where: {
           project: { workspaceId: workspace.id },
+          createdAt: { lte: targetDate },
           status: { notIn: ["COMPLETED", "ARCHIVED"] },
           ...(taskFilter ? { AND: [taskFilter] } : {})
         },
@@ -146,6 +160,7 @@ export async function getDashboardData() {
         take: 4,
         where: { 
           workspaceId: workspace.id,
+          updatedAt: { lte: targetDate },
           ...(projectFilter ? { project: projectFilter } : {})
         },
         orderBy: { updatedAt: "desc" },
@@ -155,6 +170,9 @@ export async function getDashboardData() {
       // Actividad Reciente 
       (role === "ADMIN" || role === "MANAGER" || (user as any)?.role === "SUPER_ADMIN") ? prisma.auditLog.findMany({
         take: 5,
+        where: {
+          timestamp: { lte: targetDate }
+        },
         orderBy: { timestamp: "desc" },
         include: { user: true }
       }) : Promise.resolve([]),
@@ -164,6 +182,7 @@ export async function getDashboardData() {
         by: ['status'],
         where: { 
           workspaceId: workspace.id,
+          createdAt: { lte: targetDate },
           ...(projectFilter ? { AND: [projectFilter] } : {})
         },
         _count: {
@@ -299,16 +318,12 @@ export async function getWeeklyProductivity(selectedDateStr?: string) {
 
       let dayHours = teHours;
 
-      if (dayHours === 0) {
-        if (dayActiveTasks.length > 0) {
-          dayHours = dayActiveTasks.reduce((sum, t) => {
-            if (t.loggedHs && t.loggedHs > 0) return sum + t.loggedHs;
-            if (t.estimatedHs && t.estimatedHs > 0) return sum + t.estimatedHs;
-            return sum + (priorityHoursMap[t.priority] || 2.5);
-          }, 0);
-        } else if (dayCompletedCount > 0) {
-          dayHours = dayCompletedCount * 2.5;
-        }
+      if (dayHours === 0 && dayCompletedCount > 0) {
+        dayHours = dayCompletedTasks.reduce((sum, t) => {
+          if (t.loggedHs && t.loggedHs > 0) return sum + t.loggedHs;
+          if (t.estimatedHs && t.estimatedHs > 0) return sum + t.estimatedHs;
+          return sum + (priorityHoursMap[t.priority] || 2.5);
+        }, 0);
       }
 
       return {

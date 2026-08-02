@@ -78,6 +78,7 @@ model User {
   projectEvents ProjectEvent[]
   notifications Notification[]
   preferences   Json?             @default("{}")
+  aiAudits      AiAudit[]
 }
 
 model Notification {
@@ -165,6 +166,7 @@ model Project {
   servers        ServerInstance[]
   projectEvents  ProjectEvent[]
   automations    ProjectAutomation[]
+  aiAudits       AiAudit[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 }
@@ -321,4 +323,25 @@ model ProjectEvent {
   
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id])
+}
+
+model AiAudit {
+  id              String   @id @default(uuid())
+  projectId       String
+  userId          String
+  provider        String   // "groq", "openai", "gemini", "deepseek", "claude"
+  model           String   // "llama-3.3-70b-versatile", "gpt-4o", etc.
+  status          String   @default("RUNNING") // RUNNING, COMPLETED, FAILED
+  score           Int?     // 0-100 maintainability index
+  summary         Json?      // Summary counts
+  result          String?    @db.LongText // Full AI response JSON string
+  contextSnapshot String?    @db.LongText // Context sent to AI as JSON string
+  tokensInput     Int?
+  tokensOutput    Int?
+  durationMs      Int?
+  error           String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id])
 }

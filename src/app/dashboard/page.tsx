@@ -20,8 +20,8 @@ export default async function DashboardPage(props: {
   const selectedDate = searchParams?.date;
 
   const [metricsResult, dataResult, productivityResult] = await Promise.all([
-    getDashboardMetrics(),
-    getDashboardData(),
+    getDashboardMetrics(selectedDate),
+    getDashboardData(selectedDate),
     getWeeklyProductivity(selectedDate)
   ]);
   

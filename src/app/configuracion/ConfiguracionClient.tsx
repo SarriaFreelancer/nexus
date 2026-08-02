@@ -4,8 +4,11 @@ import React, { useState } from "react";
 import { Settings, ShieldCheck, Users, Lock, Key, Server, Database, Trash2, DatabaseBackup, Loader2, Compass } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { seedTestData, clearTestData } from "@/core/application/actions/seedActions";
+import { resetGuidedTour } from "@/core/application/actions/tourActions";
+import { useSession } from "next-auth/react";
 
 export default function ConfiguracionPage() {
+  const { data: session, update } = useSession();
   const [isSeeding, setIsSeeding] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
@@ -103,13 +106,18 @@ export default function ConfiguracionPage() {
 
             <div className="space-y-3">
               <button 
-                onClick={() => {
-                  localStorage.removeItem("hasSeenTour");
-                  Object.keys(localStorage).forEach(k => {
-                    if (k.startsWith("hasSeenTour")) localStorage.removeItem(k);
-                  });
-                  window.dispatchEvent(new Event("relaunch-tour"));
-                  setMessage({ type: "success", text: "¡Tour Guiado relanzado con éxito! Se iniciará en unos segundos." });
+                onClick={async () => {
+                  setMessage(null);
+                  const result = await resetGuidedTour();
+                  if (result.success) {
+                    if (session?.user) {
+                      await update({ preferences: { ...(session.user as any).preferences, hasCompletedTour: false } });
+                    }
+                    window.dispatchEvent(new Event("relaunch-tour"));
+                    setMessage({ type: "success", text: "¡Tour Guiado relanzado con éxito! Se iniciará en unos segundos." });
+                  } else {
+                    setMessage({ type: "error", text: "No tienes permiso para realizar esta acción." });
+                  }
                 }}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-md shadow-indigo-600/20 text-xs flex items-center justify-center gap-2 cursor-pointer"
               >

@@ -1,15 +1,18 @@
 "use client";
+// @ts-nocheck
 
 import React, { useState, useEffect } from "react";
-import { Joyride, CallBackProps, STATUS, Step } from "react-joyride";
+import { Joyride, STATUS, Step } from "react-joyride";
+const JoyrideAny = Joyride as any;
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { completeGuidedTour } from "@/core/application/actions/tourActions";
 
 export default function GuidedTour() {
   const [run, setRun] = useState(false);
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const userId = (session?.user as any)?.id || "user";
+  const { data: session, update } = useSession();
+  const user = session?.user as any;
 
   useEffect(() => {
     // No mostrar en la vista de login o pública
@@ -17,28 +20,27 @@ export default function GuidedTour() {
       return;
     }
 
-    const storageKey = `hasSeenTour_${userId}`;
-    const hasSeenTour = localStorage.getItem(storageKey) || localStorage.getItem("hasSeenTour");
+    if (!user) return;
+
+    const hasSeenTour = user?.preferences?.hasCompletedTour;
     
     if (!hasSeenTour) {
       const timer = setTimeout(() => setRun(true), 1200);
       return () => clearTimeout(timer);
     }
-  }, [pathname, userId]);
+  }, [pathname, user]);
 
   useEffect(() => {
     // Escuchar evento de relanzamiento desde Configuración / Super Admin
     const handleRelaunch = () => {
-      localStorage.removeItem(`hasSeenTour_${userId}`);
-      localStorage.removeItem("hasSeenTour");
       setRun(true);
     };
 
     window.addEventListener("relaunch-tour", handleRelaunch);
     return () => window.removeEventListener("relaunch-tour", handleRelaunch);
-  }, [userId]);
+  }, []);
 
-  const steps: Step[] = [
+  const steps: any[] = [
     {
       target: "body",
       content: "¡Bienvenido a Nexus Enterprise Platform! Te daremos un breve recorrido por las funciones principales.",
@@ -72,21 +74,27 @@ export default function GuidedTour() {
     }
   ];
 
-  const handleJoyrideCallback = (data: CallBackProps) => {
+  const handleJoyrideCallback = async (data: any) => {
     const { status } = data;
     const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
     
     if (finishedStatuses.includes(status)) {
       setRun(false);
-      localStorage.setItem(`hasSeenTour_${userId}`, "true");
-      localStorage.setItem("hasSeenTour", "true");
+      
+      // Llamar a server action para guardarlo permanentemente
+      await completeGuidedTour();
+      
+      // Actualizar la sesión en cliente
+      if (user) {
+        await update({ preferences: { ...user.preferences, hasCompletedTour: true } });
+      }
     }
   };
 
   if (!run) return null;
 
   return (
-    <Joyride
+    <JoyrideAny
       callback={handleJoyrideCallback}
       continuous
       hideCloseButton
@@ -95,14 +103,14 @@ export default function GuidedTour() {
       showProgress
       showSkipButton
       steps={steps}
-      styles={{
+      styles={({
         options: {
           zIndex: 10000,
           primaryColor: "#4f46e5",
           textColor: "#1e293b",
           backgroundColor: "#ffffff",
-        },
-      }}
+        }
+      } as any)}
       locale={{
         back: 'Atrás',
         close: 'Cerrar',

@@ -44,7 +44,7 @@ export const authOptions: NextAuthOptions = {
                 }
               });
             } catch (e) {}
-            return { id: newUser.id, email: newUser.email, name: newUser.name, role: newUser.globalRole, avatarUrl: newUser.avatarUrl };
+            return { id: newUser.id, email: newUser.email, name: newUser.name, role: newUser.globalRole, avatarUrl: newUser.avatarUrl, preferences: newUser.preferences };
           }
 
           try {
@@ -76,7 +76,7 @@ export const authOptions: NextAuthOptions = {
               }
             });
           } catch (e) {}
-          return { id: user.id, email: user.email, name: user.name, role: user.globalRole || "ADMIN", avatarUrl: user.avatarUrl };
+          return { id: user.id, email: user.email, name: user.name, role: user.globalRole || "ADMIN", avatarUrl: user.avatarUrl, preferences: user.preferences };
         } else {
           try {
             await prisma.auditLog.create({
@@ -102,10 +102,12 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.email = user.email;
         token.picture = (user as any).avatarUrl;
+        token.preferences = (user as any).preferences;
       }
       if (trigger === "update" && session) {
         if (session.name) token.name = session.name;
         if (session.picture) token.picture = session.picture;
+        if (session.preferences !== undefined) token.preferences = session.preferences;
       }
       return token;
     },
@@ -113,6 +115,7 @@ export const authOptions: NextAuthOptions = {
       if (session?.user) {
         (session.user as any).role = token.role || "ADMIN";
         (session.user as any).id = token.id;
+        (session.user as any).preferences = token.preferences || {};
         if (token.name) session.user.name = token.name;
         if (token.picture) session.user.image = token.picture as string;
       }
