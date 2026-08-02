@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Settings, ShieldCheck, Users, Lock, Key, Server, Database, Trash2, DatabaseBackup, Loader2 } from "lucide-react";
+import { Settings, ShieldCheck, Users, Lock, Key, Server, Database, Trash2, DatabaseBackup, Loader2, Compass } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { seedTestData, clearTestData } from "@/core/application/actions/seedActions";
 
@@ -102,6 +102,21 @@ export default function ConfiguracionPage() {
             )}
 
             <div className="space-y-3">
+              <button 
+                onClick={() => {
+                  localStorage.removeItem("hasSeenTour");
+                  Object.keys(localStorage).forEach(k => {
+                    if (k.startsWith("hasSeenTour")) localStorage.removeItem(k);
+                  });
+                  window.dispatchEvent(new Event("relaunch-tour"));
+                  setMessage({ type: "success", text: "¡Tour Guiado relanzado con éxito! Se iniciará en unos segundos." });
+                }}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-md shadow-indigo-600/20 text-xs flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Compass className="w-4 h-4" />
+                Relanzar Tour Guiado
+              </button>
+
               <button 
                 onClick={handleSeed}
                 disabled={isSeeding || isClearing}

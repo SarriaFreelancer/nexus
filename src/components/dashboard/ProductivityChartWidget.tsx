@@ -133,7 +133,9 @@ export const ProductivityChartWidget: React.FC<ProductivityChartWidgetProps> = (
           </div>
           <div>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Eficiencia</p>
-            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Calculando...</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              {totalHours > 0 ? `${(totalTasks / totalHours).toFixed(1)} tks/h` : "100%"}
+            </p>
           </div>
         </div>
 

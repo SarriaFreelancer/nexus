@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import ProjectTokenModal from "@/components/dashboard/ProjectTokenModal";
 import { useParams, useRouter } from "next/navigation";
 import { getProjectById } from "@/core/application/actions/projectActions";
 import { FolderKanban, ArrowLeft, Loader2, GitBranch, Globe, Calendar, Clock, CheckCircle2, Share2, Copy, UserPlus, Check } from "lucide-react";
@@ -19,6 +20,8 @@ export default function ProjectDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -47,8 +50,18 @@ export default function ProjectDetail() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Proyecto no encontrado</h2>
-        <button onClick={() => router.push('/proyectos')} className="text-indigo-500 hover:underline">
-          Volver a Proyectos
+        <button
+          onClick={() => {}}
+          className="text-xs text-indigo-600 hover:underline"
+        >
+          Ver últimos commits
+        </button>
+        {/* Botón token */}
+        <button
+          onClick={() => { setSelectedProjectId(id); setIsModalOpen(true); }}
+          className="text-xs text-indigo-600 hover:underline ml-2"
+        >
+          Configurar Token
         </button>
       </div>
     );

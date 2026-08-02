@@ -6,14 +6,14 @@ import { Navbar } from "@/components/layout/Navbar";
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isPublicPage = pathname === "/" || pathname === "/login" || pathname === "/register";
+  const isPublicPage = pathname === "/" || pathname === "/login" || pathname === "/register" || pathname === "/privacy";
 
   if (isPublicPage) {
     return <>{children}</>;
   }
 
   return (
-    <>
+    <div className="flex h-full overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <Navbar />
@@ -21,6 +21,6 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
-    </>
+    </div>
   );
 }

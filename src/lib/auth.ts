@@ -34,15 +34,60 @@ export const authOptions: NextAuthOptions = {
                 password: hashedPassword
               }
             });
+            try {
+              await prisma.auditLog.create({
+                data: {
+                  userId: newUser.id,
+                  action: "LOGIN_SUCCESS",
+                  entity: "AUTH",
+                  details: { email: newUser.email, name: newUser.name, firstSetup: true }
+                }
+              });
+            } catch (e) {}
             return { id: newUser.id, email: newUser.email, name: newUser.name, role: newUser.globalRole, avatarUrl: newUser.avatarUrl };
           }
+
+          try {
+            const firstUser = await prisma.user.findFirst();
+            if (firstUser) {
+              await prisma.auditLog.create({
+                data: {
+                  userId: firstUser.id,
+                  action: "LOGIN_FAILED",
+                  entity: "AUTH",
+                  details: { email: cleanEmail, reason: "Usuario no encontrado" }
+                }
+              });
+            }
+          } catch (e) {}
           return null;
         }
 
         const isPasswordValid = user.password ? await bcrypt.compare(credentials.password, user.password) : false;
         
         if (isPasswordValid) {
-           return { id: user.id, email: user.email, name: user.name, role: user.globalRole || "ADMIN", avatarUrl: user.avatarUrl };
+          try {
+            await prisma.auditLog.create({
+              data: {
+                userId: user.id,
+                action: "LOGIN_SUCCESS",
+                entity: "AUTH",
+                details: { email: user.email, name: user.name }
+              }
+            });
+          } catch (e) {}
+          return { id: user.id, email: user.email, name: user.name, role: user.globalRole || "ADMIN", avatarUrl: user.avatarUrl };
+        } else {
+          try {
+            await prisma.auditLog.create({
+              data: {
+                userId: user.id,
+                action: "LOGIN_FAILED",
+                entity: "AUTH",
+                details: { email: user.email, reason: "Contraseña incorrecta" }
+              }
+            });
+          } catch (e) {}
         }
 
         return null;

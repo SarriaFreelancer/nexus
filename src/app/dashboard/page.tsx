@@ -8,15 +8,21 @@ import { UpcomingTasksWidget } from "@/components/dashboard/UpcomingTasksWidget"
 import { ServerStatusWidget } from "@/components/dashboard/ServerStatusWidget";
 import { ProductivityChartWidget } from "@/components/dashboard/ProductivityChartWidget";
 import { SystemAlertsWidget } from "@/components/dashboard/SystemAlertsWidget";
+import { DashboardDateSelector } from "@/components/dashboard/DashboardDateSelector";
 import { getDashboardMetrics, getDashboardData, getWeeklyProductivity } from "@/core/application/actions/dashboardActions";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage(props: {
+  searchParams?: Promise<{ date?: string }>;
+}) {
+  const searchParams = await props.searchParams;
+  const selectedDate = searchParams?.date;
+
   const [metricsResult, dataResult, productivityResult] = await Promise.all([
     getDashboardMetrics(),
     getDashboardData(),
-    getWeeklyProductivity()
+    getWeeklyProductivity(selectedDate)
   ]);
   
   const metrics = metricsResult.data;
@@ -26,13 +32,16 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
       {/* Greeting Header */}
-      <div>
-        <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
-          ¡Bienvenido de vuelta, David! 👋
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-          Aquí tienes un resumen de lo que está sucediendo en Nexus hoy.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
+            ¡Bienvenido de vuelta, David! 👋
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+            Resumen general de tu actividad y la de tu equipo en Nexus.
+          </p>
+        </div>
+        <DashboardDateSelector selectedDate={selectedDate} />
       </div>
 
       {/* Top 5 Metric Cards */}

@@ -16,7 +16,8 @@ import {
   Settings,
   ShieldAlert,
   Users as UsersCore,
-  Crown
+  Crown,
+  TrendingUp
 } from "lucide-react";
 
 export interface NavItem {
@@ -41,6 +42,7 @@ export const navigationItems: NavItem[] = [
   { title: "Deploys", href: "/deploys", icon: Rocket, allowedRoles: ["ADMIN", "DEVELOPER"] },
   { title: "Finanzas", href: "/finanzas", icon: DollarSign, allowedRoles: ["ADMIN", "COMMERCIAL"] },
   { title: "Reportes", href: "/reportes", icon: BarChart3, allowedRoles: ["ADMIN", "MANAGER", "COMMERCIAL"] },
+  { title: "Analíticas", href: "/analiticas", icon: TrendingUp, allowedRoles: ["ADMIN", "MANAGER"] },
   { title: "IA Assistant", href: "/ia-assistant", icon: Bot },
   { title: "Colaboradores", href: "/colaboradores", icon: UsersCore, allowedRoles: ["ADMIN", "MANAGER"] },
   { title: "Panel SuperAdmin", href: "/superadmin", icon: Crown, isSuperAdminOnly: true },

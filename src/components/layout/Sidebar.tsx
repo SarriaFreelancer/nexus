@@ -91,7 +91,7 @@ export const Sidebar: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-xl overflow-hidden ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/30 shrink-0">
             <img
-              src="/nexus-logo-new.jpg"
+              src="/nexus-logo-n.jpg"
               alt="NEXUS Emblem"
               className="h-full w-full object-cover"
             />

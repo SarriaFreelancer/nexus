@@ -6,11 +6,19 @@ import { SessionProvider } from "@/components/providers/SessionProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 
+import CookieBannerComponent from "@/components/ui/CookieBanner";
+import GuidedTour from "@/components/dashboard/GuidedTour";
+
 export const metadata: Metadata = {
   title: "SarriaTech Studio | Nexus Enterprise Platform",
   description: "ERP DevSecOps integral para empresas de desarrollo de software",
   icons: {
-    icon: "/nexus-logo.png",
+    icon: [
+      { url: "/nexus-logo-n.jpg", type: "image/jpeg" },
+      { url: "/icon.jpg", type: "image/jpeg" }
+    ],
+    shortcut: "/nexus-logo-n.jpg",
+    apple: "/nexus-logo-n.jpg",
   },
 };
 
@@ -21,8 +29,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning className="h-full">
-      <head />
-      <body suppressHydrationWarning className="h-full bg-white dark:bg-[#0b0e1a] text-slate-900 dark:text-slate-100 antialiased flex overflow-hidden transition-colors duration-300">
+      <head>
+        <link rel="icon" href="/nexus-logo-n.jpg" type="image/jpeg" />
+        <link rel="shortcut icon" href="/nexus-logo-n.jpg" type="image/jpeg" />
+        <link rel="apple-touch-icon" href="/nexus-logo-n.jpg" />
+      </head>
+      <body suppressHydrationWarning className="h-full bg-white dark:bg-[#0b0e1a] text-slate-900 dark:text-slate-100 antialiased transition-colors duration-300">
         <SessionProvider>
           <ThemeProvider
             attribute="class"
@@ -33,6 +45,8 @@ export default function RootLayout({
             <ConditionalLayout>
               {children}
             </ConditionalLayout>
+            <GuidedTour />
+            <CookieBannerComponent />
           </ThemeProvider>
         </SessionProvider>
       </body>

@@ -230,20 +230,25 @@ export async function getDashboardData() {
   }
 }
 
-export async function getWeeklyProductivity() {
+export async function getWeeklyProductivity(selectedDateStr?: string) {
   try {
     const { workspace } = await getCurrentWorkspace();
-    const today = new Date();
-    // Get past 7 days
+    
+    let targetDate = selectedDateStr ? new Date(selectedDateStr) : new Date();
+    if (isNaN(targetDate.getTime())) {
+      targetDate = new Date();
+    }
+
+    // Get past 7 days up to targetDate
     const dates = Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date();
-      d.setDate(today.getDate() - (6 - i));
+      const d = new Date(targetDate);
+      d.setDate(targetDate.getDate() - (6 - i));
       d.setHours(0, 0, 0, 0);
       return d;
     });
 
     const startDate = dates[0];
-    const endDate = new Date(today);
+    const endDate = new Date(targetDate);
     endDate.setHours(23, 59, 59, 999);
 
     // Fetch time entries in this range for tasks in this workspace
@@ -257,17 +262,19 @@ export async function getWeeklyProductivity() {
       },
     });
 
-    // Fetch tasks completed in this range for projects in this workspace
-    const completedTasks = await prisma.task.findMany({
+    // Fetch all tasks for projects in this workspace
+    const tasks = await prisma.task.findMany({
       where: {
         project: { workspaceId: workspace.id },
-        status: { in: ["DEPLOYED", "COMPLETED"] },
-        updatedAt: {
-          gte: startDate,
-          lte: endDate,
-        },
       },
     });
+
+    const priorityHoursMap: Record<string, number> = {
+      LOW: 1.5,
+      MEDIUM: 2.5,
+      HIGH: 4.0,
+      URGENT: 6.0,
+    };
 
     // Group by day
     const chartData = dates.map(date => {
@@ -276,18 +283,38 @@ export async function getWeeklyProductivity() {
       const nextDay = new Date(date);
       nextDay.setDate(date.getDate() + 1);
 
-      const dayHours = timeEntries
+      const teHours = timeEntries
         .filter(te => te.date >= date && te.date < nextDay)
         .reduce((sum, te) => sum + te.hours, 0);
 
-      const dayCompleted = completedTasks
-        .filter(t => t.updatedAt >= date && t.updatedAt < nextDay)
-        .length;
+      const dayCompletedTasks = tasks.filter(
+        t => (t.status === "DEPLOYED" || t.status === "COMPLETED") &&
+             t.updatedAt >= date && t.updatedAt < nextDay
+      );
+      const dayCompletedCount = dayCompletedTasks.length;
+
+      const dayActiveTasks = tasks.filter(
+        t => t.updatedAt >= date && t.updatedAt < nextDay
+      );
+
+      let dayHours = teHours;
+
+      if (dayHours === 0) {
+        if (dayActiveTasks.length > 0) {
+          dayHours = dayActiveTasks.reduce((sum, t) => {
+            if (t.loggedHs && t.loggedHs > 0) return sum + t.loggedHs;
+            if (t.estimatedHs && t.estimatedHs > 0) return sum + t.estimatedHs;
+            return sum + (priorityHoursMap[t.priority] || 2.5);
+          }, 0);
+        } else if (dayCompletedCount > 0) {
+          dayHours = dayCompletedCount * 2.5;
+        }
+      }
 
       return {
-        name: dayName.charAt(0).toUpperCase() + dayName.slice(1), // e.g. "Lun", "Mar"
-        tasksCompleted: dayCompleted,
-        hoursLogged: dayHours
+        name: dayName.charAt(0).toUpperCase() + dayName.slice(1).replace('.', ''),
+        tasksCompleted: dayCompletedCount,
+        hoursLogged: Number(dayHours.toFixed(1))
       };
     });
 
