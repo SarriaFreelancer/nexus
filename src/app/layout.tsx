@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 
 import CookieBannerComponent from "@/components/ui/CookieBanner";
+import SecurityGuard from "@/components/ui/SecurityGuard";
 
 export const metadata: Metadata = {
   title: "SarriaTech Studio | Nexus Enterprise Platform",
@@ -37,6 +38,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <ConditionalLayout>
+              <SecurityGuard />
               {children}
             </ConditionalLayout>
             <CookieBannerComponent />
