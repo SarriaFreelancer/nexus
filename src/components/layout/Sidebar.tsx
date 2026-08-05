@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { navigationItems } from "@/core/config/navigation";
 import { mockCurrentUser } from "@/core/infrastructure/mockData";
@@ -15,7 +15,14 @@ import { Plus, Check, Loader2, Building, ChevronDown, ChevronsLeft, ChevronsRigh
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
+  
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    router.replace('/login');
+  };
+  
   const [collapsed, setCollapsed] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -314,9 +321,8 @@ export const Sidebar: React.FC = () => {
                 </div>
               </div>
             </button>
-
             <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={handleSignOut}
               title="Cerrar Sesión"
               className="p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/20 transition-colors shrink-0 cursor-pointer"
             >
@@ -325,7 +331,7 @@ export const Sidebar: React.FC = () => {
           </div>
         ) : (
           <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={handleSignOut}
             title="Cerrar Sesión"
             className="flex justify-center w-full p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer"
           >

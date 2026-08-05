@@ -2,7 +2,8 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
-import { prisma } from "./prisma";
+import { randomUUID } from "crypto";
+import { headers } from "next/headers";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -22,6 +23,10 @@ export const authOptions: NextAuthOptions = {
         }
 
         const cleanEmail = credentials.email.trim().toLowerCase();
+        
+        const headersList = await headers();
+        const ip = headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || "Unknown IP";
+        const browser = headersList.get("user-agent") || "Unknown Browser";
 
         const user = await prisma.user.findUnique({
           where: { email: cleanEmail }
@@ -45,7 +50,7 @@ export const authOptions: NextAuthOptions = {
                   userId: newUser.id,
                   action: "LOGIN_SUCCESS",
                   entity: "AUTH",
-                  details: { email: newUser.email, name: newUser.name, firstSetup: true }
+                  details: { email: newUser.email, name: newUser.name, firstSetup: true, ip, browser }
                 }
               });
             } catch (e) {}
@@ -60,7 +65,7 @@ export const authOptions: NextAuthOptions = {
                   userId: firstUser.id,
                   action: "LOGIN_FAILED",
                   entity: "AUTH",
-                  details: { email: cleanEmail, reason: "Usuario no encontrado" }
+                  details: { email: cleanEmail, reason: "Usuario no encontrado", ip, browser }
                 }
               });
             }
@@ -68,7 +73,10 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // Validate password
         const isPasswordValid = user.password ? await bcrypt.compare(credentials.password, user.password) : false;
+
+
         
         if (isPasswordValid) {
           try {
@@ -77,7 +85,7 @@ export const authOptions: NextAuthOptions = {
                 userId: user.id,
                 action: "LOGIN_SUCCESS",
                 entity: "AUTH",
-                details: { email: user.email, name: user.name }
+                details: { email: user.email, name: user.name, ip, browser }
               }
             });
           } catch (e) {}
@@ -89,7 +97,7 @@ export const authOptions: NextAuthOptions = {
                 userId: user.id,
                 action: "LOGIN_FAILED",
                 entity: "AUTH",
-                details: { email: user.email, reason: "Contraseña incorrecta" }
+                details: { email: user.email, reason: "Contraseña incorrecta", ip, browser }
               }
             });
           } catch (e) {}
@@ -103,6 +111,10 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
         if (!user.email) return false;
+        
+        const headersList = await headers();
+        const ip = headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || "Unknown IP";
+        const browser = headersList.get("user-agent") || "Unknown Browser";
         
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email }
@@ -127,7 +139,7 @@ export const authOptions: NextAuthOptions = {
                 userId: newUser.id,
                 action: "LOGIN_SUCCESS",
                 entity: "AUTH",
-                details: { email: newUser.email, provider: "google", registration: true }
+                details: { email: newUser.email, provider: "google", registration: true, ip, browser }
               }
             });
           } catch (e) {}
@@ -149,7 +161,7 @@ export const authOptions: NextAuthOptions = {
                 userId: existingUser.id,
                 action: "LOGIN_SUCCESS",
                 entity: "AUTH",
-                details: { email: existingUser.email, provider: "google" }
+                details: { email: existingUser.email, provider: "google", ip, browser }
               }
             });
           } catch (e) {}

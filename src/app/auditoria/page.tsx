@@ -103,7 +103,13 @@ export default function AuditoriaPage() {
                   <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/20 transition-colors group">
                     <td className="px-6 py-3">
                       <div className="flex items-center gap-3">
-                        <img src={log.user.avatarUrl} alt={log.user.name} className="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200 dark:ring-slate-800" />
+                        {log.user.avatarUrl ? (
+                          <img src={log.user.avatarUrl} alt={log.user.name} className="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200 dark:ring-slate-800" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs ring-1 ring-slate-200 dark:ring-slate-800 shrink-0">
+                            {log.user.name ? log.user.name.charAt(0).toUpperCase() : "U"}
+                          </div>
+                        )}
                         <div>
                           <p className="font-bold text-slate-800 dark:text-slate-200 text-xs">{log.user.name}</p>
                           <p className="text-[10px] text-slate-500 dark:text-slate-400">{log.user.email}</p>

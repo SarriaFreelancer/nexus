@@ -18,7 +18,13 @@ export function AuditDetailModal({ isOpen, onClose, log }: AuditDetailModalProps
       <div className="space-y-6">
         {/* Header Info */}
         <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
-          <img src={log.user.avatarUrl} alt={log.user.name} className="w-12 h-12 rounded-full object-cover ring-2 ring-indigo-500/20" />
+          {log.user.avatarUrl ? (
+            <img src={log.user.avatarUrl} alt={log.user.name} className="w-12 h-12 rounded-full object-cover ring-2 ring-indigo-500/20 shrink-0" />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xl ring-2 ring-indigo-500/20 shrink-0">
+              {log.user.name ? log.user.name.charAt(0).toUpperCase() : "U"}
+            </div>
+          )}
           <div>
             <h3 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{log.user.name}</h3>
             <p className="text-xs text-slate-500 font-medium">{log.user.email}</p>
@@ -32,7 +38,7 @@ export function AuditDetailModal({ isOpen, onClose, log }: AuditDetailModalProps
         </div>
 
         {/* Geo & Network Data */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div className="p-3 rounded-xl bg-white dark:bg-[#0b0e1a] border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
               <Globe className="w-3.5 h-3.5 text-blue-400" /> Dirección IP
@@ -41,15 +47,15 @@ export function AuditDetailModal({ isOpen, onClose, log }: AuditDetailModalProps
           </div>
           <div className="p-3 rounded-xl bg-white dark:bg-[#0b0e1a] border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
-              <Laptop className="w-3.5 h-3.5 text-emerald-400" /> Dispositivo
-            </div>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title={log.details?.browser}>{log.details?.browser || "N/A"}</span>
-          </div>
-          <div className="p-3 rounded-xl bg-white dark:bg-[#0b0e1a] border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
               <MapPin className="w-3.5 h-3.5 text-rose-400" /> Ubicación
             </div>
             <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title={log.details?.city}>{log.details?.city || "N/A"}</span>
+          </div>
+          <div className="col-span-2 p-3 rounded-xl bg-white dark:bg-[#0b0e1a] border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+              <Laptop className="w-3.5 h-3.5 text-emerald-400" /> Dispositivo
+            </div>
+            <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 break-words">{log.details?.browser || "N/A"}</span>
           </div>
         </div>
 

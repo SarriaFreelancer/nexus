@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { User, Mail, Shield, Camera, Loader2, LogOut } from "lucide-react";
 import { mockCurrentUser } from "@/core/infrastructure/mockData";
 import { updateUserProfile } from "@/core/application/actions/userActions";
 
 export function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const router = useRouter();
   const { data: session, update: updateSession } = useSession();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -171,7 +173,10 @@ export function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
         <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800/80">
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={async () => {
+              await signOut({ redirect: false });
+              router.replace('/login');
+            }}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-xs font-bold transition-all border border-rose-500/20 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />

@@ -39,7 +39,7 @@ export default function DeploysPage() {
           ) : deploys.map((dep, idx) => (
             <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex-wrap gap-3">
               <div className="flex items-center gap-3">
-                <CheckCircle2 className={`h-5 w-5 shrink-0 ${dep.status === "DEPLOYED" ? "text-emerald-400" : dep.status === "PENDING" ? "text-amber-400" : "text-blue-400"}`} />
+                <CheckCircle2 className={`h-5 w-5 shrink-0 ${dep.isCurrent ? "text-emerald-400" : "text-blue-400"}`} />
                 <div>
                   <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">{dep.project?.name} (Producción)</h4>
                   <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -51,8 +51,8 @@ export default function DeploysPage() {
               </div>
 
               <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-                <span>{new Date(dep.createdAt).toLocaleDateString()}</span>
-                <Badge variant={dep.status === "DEPLOYED" ? "emerald" : dep.status === "PENDING" ? "amber" : "blue"}>{dep.status}</Badge>
+                <span>{new Date(dep.releaseDate || Date.now()).toLocaleDateString()}</span>
+                <Badge variant={dep.isCurrent ? "emerald" : "blue"}>{dep.isCurrent ? "DEPLOYED" : "RELEASED"}</Badge>
               </div>
             </div>
           ))}

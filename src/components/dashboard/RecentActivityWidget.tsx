@@ -75,7 +75,7 @@ export const RecentActivityWidget: React.FC<RecentActivityWidgetProps> = ({ acti
   };
 
   return (
-    <div className="p-5 rounded-2xl bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700/80 transition-all flex flex-col justify-between h-full">
+    <div className="p-5 rounded-2xl bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700/80 transition-all flex flex-col justify-between">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Actividad Reciente</h3>
         <button className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
@@ -84,7 +84,7 @@ export const RecentActivityWidget: React.FC<RecentActivityWidgetProps> = ({ acti
       </div>
 
       <div className="space-y-3.5">
-        {activities.map((act) => (
+        {activities.slice(0,5).map((act) => (
           <div key={act.id} className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-3">
               {act.user?.avatarUrl ? (
@@ -105,7 +105,7 @@ export const RecentActivityWidget: React.FC<RecentActivityWidgetProps> = ({ acti
                   <span className="font-semibold text-indigo-500 dark:text-indigo-400">{translateDetails(act.details?.target || act.entity)}</span>
                 </p>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                  {new Date(act.timestamp).toLocaleDateString()}
+                    {new Date(act.timestamp).toISOString().split('T')[0]}
                 </p>
               </div>
             </div>

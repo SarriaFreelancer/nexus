@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Tag, Plus } from "lucide-react";
+import { Tag, Plus, Webhook } from "lucide-react";
 import { CreateVersionModal } from "@/components/dashboard/CreateVersionModal";
+import { WebhookInfoModal } from "@/components/dashboard/WebhookInfoModal";
 
 export function VersionesHeader({ projects }: { projects: any[] }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
 
   return (
     <>
@@ -19,19 +21,35 @@ export function VersionesHeader({ projects }: { projects: any[] }) {
           </p>
         </div>
 
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all self-start"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Crear Nueva Versión</span>
-        </button>
+        <div className="flex items-center gap-3 self-start">
+          <button 
+            onClick={() => setIsWebhookModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all"
+          >
+            <Webhook className="h-4 w-4 text-indigo-500" />
+            <span>Automatizar CI/CD</span>
+          </button>
+          
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Crear Nueva Versión</span>
+          </button>
+        </div>
       </div>
 
       <CreateVersionModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         projects={projects} 
+      />
+
+      <WebhookInfoModal
+        isOpen={isWebhookModalOpen}
+        onClose={() => setIsWebhookModalOpen(false)}
+        projects={projects}
       />
     </>
   );

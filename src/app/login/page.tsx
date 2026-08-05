@@ -41,17 +41,7 @@ export default function LoginPage() {
 
   return (
     <div className={`min-h-screen w-full flex items-center justify-center p-2 sm:p-4 transition-colors duration-300 ${isDarkMode ? 'bg-[#04060d] text-slate-100' : 'bg-[#f4f3ff] text-slate-900'} relative`}>
-      {/* Top Right Theme Toggle */}
-      <button
-        onClick={() => setIsDarkMode(!isDarkMode)}
-        className={`absolute top-4 right-4 p-2 rounded-xl border transition-colors z-20 ${
-          isDarkMode 
-            ? 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200' 
-            : 'bg-white/80 border-indigo-200 text-indigo-600 hover:bg-white'
-        }`}
-      >
-        {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-      </button>
+
 
       {/* Floating Centered Card Container */}
       <div className={`w-full max-w-5xl max-h-[94vh] rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 transition-all duration-300 ${
@@ -140,10 +130,18 @@ export default function LoginPage() {
               : 'bg-indigo-50/20 border-indigo-100'
           }`}>
             {/* Header */}
-            <div className="text-center space-y-1">
-              <h2 className={`text-2xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Bienvenido de vuelta</h2>
-              <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Inicia sesión para continuar en Nexus</p>
-            </div>
+            <div className="flex items-center justify-between w-full">
+  <div className="space-y-1">
+    <h2 className={`text-2xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Bienvenido de vuelta</h2>
+    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Inicia sesión para continuar en Nexus</p>
+  </div>
+  <button
+    onClick={() => setIsDarkMode(!isDarkMode)}
+    className={`p-1.5 rounded-lg border transition-colors ${isDarkMode ? 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-200' : 'bg-indigo-50 border-indigo-200 text-indigo-600 hover:bg-indigo-100'}`}
+  >
+    {isDarkMode ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+  </button>
+</div>
 
             {error && (
               <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded-xl text-center">
