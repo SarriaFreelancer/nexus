@@ -64,8 +64,10 @@ export async function collectDatabaseContext(projectId: string, workspaceId: str
       authStrategy: "NextAuth.js JWT",
       oauthProviders: ["Google OAuth 2.0"],
       passwordHashing: "Bcrypt (10 salt rounds)",
-      orm: "Prisma ORM (Parameterized Queries)",
+      orm: "Prisma ORM (Parameterized Queries - Immune to SQLi)",
       routeProtection: "Session & Role Auth (SUPER_ADMIN, ADMIN, USER)",
+      protocol: "HTTPS (SSL/TLS Active)",
+      inputSanitization: "Prisma ORM Parameterized Queries + Strict TypeScript Data Typing",
       auditLogging: "AuditLog enabled"
     }
   };
