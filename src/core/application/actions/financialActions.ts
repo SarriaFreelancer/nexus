@@ -42,7 +42,12 @@ export async function createFinancialRecord(data: any) {
       }
     });
 
-    await recordAuditLog(userId, "CREATE_FINANCIAL", "Registró un movimiento financiero", `Módulo Finanzas (${record.category})`, { amount: record.amount, type: record.type });
+    await recordAuditLog(userId, "CREATE_FINANCIAL", "Registró un movimiento financiero", `Módulo Finanzas (${record.category})`, { 
+      amount: record.amount, 
+      type: record.type,
+      before: null,
+      after: { amount: record.amount, type: record.type, category: record.category, description: record.description }
+    });
 
     revalidatePath("/finanzas");
     return { success: true, data: record };
@@ -72,7 +77,12 @@ export async function updateFinancialRecord(id: string, data: any) {
       }
     });
 
-    await recordAuditLog(userId, "UPDATE_FINANCIAL", "Actualizó un movimiento financiero", `Módulo Finanzas (${record.category})`, { amount: record.amount, type: record.type });
+    await recordAuditLog(userId, "UPDATE_FINANCIAL", "Actualizó un movimiento financiero", `Módulo Finanzas (${record.category})`, { 
+      amount: record.amount, 
+      type: record.type,
+      before: { amount: existing.amount, type: existing.type, category: existing.category, description: existing.description },
+      after: { amount: record.amount, type: record.type, category: record.category, description: record.description }
+    });
 
     revalidatePath("/finanzas");
     return { success: true, data: record };
@@ -93,7 +103,12 @@ export async function deleteFinancialRecord(id: string) {
 
     await prisma.financialRecord.delete({ where: { id } });
 
-    await recordAuditLog(userId, "DELETE_FINANCIAL", "Eliminó un movimiento financiero", `Módulo Finanzas (${existing.category})`, { amount: existing.amount, type: existing.type });
+    await recordAuditLog(userId, "DELETE_FINANCIAL", "Eliminó un movimiento financiero", `Módulo Finanzas (${existing.category})`, { 
+      amount: existing.amount, 
+      type: existing.type,
+      before: { amount: existing.amount, type: existing.type, category: existing.category, description: existing.description },
+      after: null
+    });
 
     revalidatePath("/finanzas");
     return { success: true };

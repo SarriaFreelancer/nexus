@@ -8,7 +8,7 @@ export async function collectGitContext(gitRepoUrl: string, gitToken: string | n
       .replace(/\.git$/i, "")
       .replace(/\/$/, "");
 
-    const token = gitToken || process.env.GITHUB_TOCKEN; // Using typo as requested
+    const token = gitToken || process.env.GITHUB_TOKEN || process.env.GITHUB_TOCKEN;
     if (!token) return null;
 
     const headers = {
@@ -49,8 +49,8 @@ export async function collectGitContext(gitRepoUrl: string, gitToken: string | n
     const treeRes = await fetch(`https://api.github.com/repos/${repo}/git/trees/${defaultBranch}?recursive=1`, { headers, cache: "no-store" });
     const treeData = treeRes.ok ? await treeRes.json() : { tree: [] };
     
-    // Limit tree items in context so we don't blow up the prompt with 10,000 file paths
-    const MAX_TREE_ITEMS = 30;
+    // Limit tree items in context
+    const MAX_TREE_ITEMS = 200;
     const allTreeItems = treeData.tree || [];
     
     // Only pass the most relevant items to the prompt (prioritize src, app, lib, exclude node_modules/dist)

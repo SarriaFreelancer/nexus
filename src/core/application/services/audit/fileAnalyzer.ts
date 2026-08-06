@@ -13,7 +13,7 @@ export async function analyzeProjectFiles(
       .replace(/\.git$/i, "")
       .replace(/\/$/, "");
 
-    const token = gitToken || process.env.GITHUB_TOCKEN; // Using typo as requested
+    const token = gitToken || process.env.GITHUB_TOKEN || process.env.GITHUB_TOCKEN;
     if (!token) return null;
 
     const headers = {
@@ -94,13 +94,13 @@ export async function analyzeProjectFiles(
     const tsConfigContent = await fetchFile("tsconfig.json");
     if (tsConfigContent) {
       try {
-        // Simple regex replace for comments and trailing commas to make it JSON parseable
+        // Strip single line & multi line comments + trailing commas
         const cleanContent = tsConfigContent
-          .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, "")
+          .replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, (m, g) => g ? "" : m)
           .replace(/,\s*([\}\]])/g, "$1");
         tsConfigAnalysis = JSON.parse(cleanContent).compilerOptions || {};
-      } catch (e) {
-        console.error("Failed to parse tsconfig.json", e);
+      } catch {
+        tsConfigAnalysis = null;
       }
     }
 
@@ -146,20 +146,19 @@ export async function analyzeProjectFiles(
       return relevantExtensions.some(ext => pathStr.endsWith(ext));
     });
 
-    // Prioritize src/ and limit to 10 files to prevent token/API overflow
+    // Prioritize src/ and take up to 15 key files for deep analysis
     const sortedFiles = candidateFiles.sort((a, b) => {
       const aSrc = a.path.startsWith('src/') ? -1 : 1;
       const bSrc = b.path.startsWith('src/') ? -1 : 1;
       if (aSrc !== bSrc) return aSrc - bSrc;
       return (a.size || 0) - (b.size || 0); // Smaller files first after src priority
-    }).slice(0, 10);
+    }).slice(0, 15);
 
     // Fetch in chunks of 5
     const chunkSize = 5;
     let totalChars = 0;
-    // GROQ Free Tier limit is 12,000 Tokens Per Minute (~40,000 chars total context). 
-    // We cap this at 6,000 to leave room for schema, package.json, and output.
-    const MAX_CHARS = 6000;
+    // Cap code characters at 12,000 to respect Groq Free Tier limit (12,000 TPM)
+    const MAX_CHARS = 12000;
 
     for (let i = 0; i < sortedFiles.length; i += chunkSize) {
       if (totalChars >= MAX_CHARS) break;

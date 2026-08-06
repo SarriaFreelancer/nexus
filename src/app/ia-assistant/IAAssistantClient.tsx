@@ -57,6 +57,67 @@ export default function IAAssistantClient({
     return "Crítico";
   };
 
+  // Deduplicate findings and recommendations against security issues and each other
+  const { filteredFindings, filteredRecommendations } = React.useMemo(() => {
+    if (!currentResult) return { filteredFindings: [], filteredRecommendations: [] };
+
+    const secTitles = new Set(
+      (currentResult.security?.issues || []).map(i => (i.title || "").toLowerCase().trim())
+    );
+
+    const findings = (currentResult.findings || []).filter(f => {
+      const t = (f.title || f.explanation || "").toLowerCase().trim();
+      if (!t) return true;
+      return !Array.from(secTitles).some(st => st.includes(t) || t.includes(st));
+    });
+
+    const findingTitles = new Set(findings.map(f => (f.title || f.explanation || "").toLowerCase().trim()));
+
+    const recommendations = (currentResult.recommendations || []).filter(r => {
+      const t = (r.title || r.description || "").toLowerCase().trim();
+      if (!t) return true;
+      const matchesSec = Array.from(secTitles).some(st => st.includes(t) || t.includes(st));
+      const matchesFinding = Array.from(findingTitles).some(ft => ft.includes(t) || t.includes(ft));
+      return !matchesSec && !matchesFinding;
+    });
+
+    return { filteredFindings: findings, filteredRecommendations: recommendations };
+  }, [currentResult]);
+
+  // Deduplicate security issues and compute accurate counts combining security + findings
+  const computedSecurity = React.useMemo(() => {
+    if (!currentResult?.security) return null;
+    
+    // Deduplicate by title + recommendation
+    const uniqueIssuesMap = new Map();
+    (currentResult.security.issues || []).forEach(issue => {
+      const key = `${issue.title?.trim()}::${issue.recommendation?.trim()}`;
+      if (!uniqueIssuesMap.has(key)) {
+        uniqueIssuesMap.set(key, issue);
+      }
+    });
+    const uniqueIssues = Array.from(uniqueIssuesMap.values());
+    
+    // Recalculate counts based on deduplicated security issues
+    const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+    uniqueIssues.forEach(issue => {
+      const s = issue.severity?.toLowerCase();
+      if (s === 'critical') counts.critical++;
+      else if (s === 'high') counts.high++;
+      else if (s === 'medium') counts.medium++;
+      else counts.low++;
+    });
+
+    return {
+      ...currentResult.security,
+      issues: uniqueIssues,
+      critical: counts.critical,
+      high: counts.high,
+      medium: counts.medium,
+      low: counts.low,
+    };
+  }, [currentResult, filteredFindings]);
+
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
       {/* Header */}
@@ -153,13 +214,13 @@ export default function IAAssistantClient({
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Vulnerabilidades de Seguridad</span>
-              <Badge variant={currentResult ? (currentResult.security?.critical > 0 ? "rose" : currentResult.security?.high > 0 ? "amber" : "emerald") : "neutral"}>
-                {currentResult ? `${currentResult.security?.critical || 0} Críticas` : "Sin datos"}
+              <Badge variant={computedSecurity ? (computedSecurity.critical > 0 ? "rose" : computedSecurity.high > 0 ? "amber" : "emerald") : "neutral"}>
+                {computedSecurity ? `${computedSecurity.critical || 0} Críticas` : "Sin datos"}
               </Badge>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              {currentResult 
-                ? `Detectadas: ${currentResult.security?.high || 0} Altas, ${currentResult.security?.medium || 0} Medias. ${currentResult.security?.critical === 0 ? "El sistema parece seguro." : "Revisión inmediata sugerida."}`
+              {computedSecurity 
+                ? `Detectadas: ${computedSecurity.high || 0} Altas, ${computedSecurity.medium || 0} Medias. ${computedSecurity.critical === 0 ? "El sistema parece seguro." : "Revisión inmediata sugerida."}`
                 : "Análisis de vulnerabilidades, dependencias y riesgos de seguridad."}
             </p>
           </div>
@@ -167,14 +228,14 @@ export default function IAAssistantClient({
       </div>
 
       {/* Security Issues List */}
-      {currentResult && currentResult.security?.issues && currentResult.security.issues.length > 0 && (
+      {computedSecurity && computedSecurity.issues && computedSecurity.issues.length > 0 && (
         <div className="p-5 rounded-2xl bg-white dark:bg-[#0f1424] border border-rose-200 dark:border-rose-900/50 space-y-4 shadow-xl">
           <h3 className="text-sm font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" /> Vulnerabilidades de Seguridad Detectadas
           </h3>
           
           <div className="space-y-3">
-            {currentResult.security.issues.map((issue, idx) => (
+            {computedSecurity.issues.map((issue, idx) => (
               <div key={`sec-${idx}`} className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 flex items-start gap-3">
                 <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
                 <div>
@@ -225,7 +286,7 @@ export default function IAAssistantClient({
         <div className="space-y-3">
           {currentResult ? (
             <>
-              {currentResult.findings?.map((finding, idx) => (
+              {filteredFindings.map((finding, idx) => (
                 <div key={idx} className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/60 flex items-start gap-3">
                   {finding.type === 'positive' ? (
                     <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
@@ -272,7 +333,7 @@ export default function IAAssistantClient({
                 </div>
               ))}
 
-              {currentResult.recommendations?.map((rec, idx) => (
+              {filteredRecommendations.map((rec, idx) => (
                 <div key={`rec-${idx}`} className="p-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 flex items-start gap-3">
                   <Sparkles className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
                   <div>

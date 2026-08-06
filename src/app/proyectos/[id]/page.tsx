@@ -10,6 +10,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AvatarGroup } from "@/components/ui/AvatarGroup";
 import { Modal } from "@/components/ui/Modal";
 import Link from "next/link";
+import { ProjectDocuments } from "@/components/projects/ProjectDocuments";
 
 export default function ProjectDetail() {
   const params = useParams();
@@ -22,6 +23,7 @@ export default function ProjectDetail() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"resumen" | "documentos">("resumen");
 
   useEffect(() => {
     if (id) {
@@ -118,7 +120,23 @@ export default function ProjectDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800">
+        <button
+          onClick={() => setActiveTab("resumen")}
+          className={`pb-3 text-sm font-bold border-b-2 transition-colors ${activeTab === "resumen" ? "border-indigo-500 text-indigo-600 dark:text-indigo-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+        >
+          Resumen
+        </button>
+        <button
+          onClick={() => setActiveTab("documentos")}
+          className={`pb-3 text-sm font-bold border-b-2 transition-colors ${activeTab === "documentos" ? "border-indigo-500 text-indigo-600 dark:text-indigo-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+        >
+          Documentos
+        </button>
+      </div>
+
+      {activeTab === "resumen" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Info Column */}
         <div className="space-y-6 col-span-1">
           <div className="p-5 rounded-2xl bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-4">
@@ -204,7 +222,12 @@ export default function ProjectDetail() {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      )}
+
+      {activeTab === "documentos" && (
+        <ProjectDocuments projectId={id} />
+      )}
 
       {/* Modal Compartir Proyecto */}
       <Modal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} title="Compartir Proyecto">

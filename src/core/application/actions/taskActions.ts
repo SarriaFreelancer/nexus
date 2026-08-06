@@ -90,7 +90,11 @@ export async function createTask(data: {
       data,
     });
 
-    await recordAuditLog(userId, "CREATE_TASK", "Creó una nueva tarea", `Tarea: ${newTask.title}`, { project: proj.name, after: { title: newTask.title, status: newTask.status } });
+    await recordAuditLog(userId, "CREATE_TASK", "Creó una nueva tarea", `Tarea: ${newTask.title}`, { 
+      project: proj.name, 
+      before: null,
+      after: { title: newTask.title, status: newTask.status, priority: newTask.priority } 
+    });
     await recordProjectEvent(data.projectId, userId, "TASK_ADDED", `Se creó la tarea "${newTask.title}"`, { taskId: newTask.id, status: newTask.status, title: newTask.title });
 
     revalidatePath("/tareas");
@@ -119,7 +123,12 @@ export async function updateTask(id: string, data: Partial<any>) {
       data,
     });
 
-    await recordAuditLog(userId, "UPDATE_TASK", "Editó la tarea", `Tarea: ${updatedTask.title}`, { project: existing.project.name, updatedFields: Object.keys(data) });
+    await recordAuditLog(userId, "UPDATE_TASK", "Editó la tarea", `Tarea: ${updatedTask.title}`, { 
+      project: existing.project.name, 
+      updatedFields: Object.keys(data),
+      before: { title: existing.title, status: existing.status, priority: existing.priority, assigneeId: existing.assigneeId, estimatedHs: existing.estimatedHs, loggedHs: existing.loggedHs },
+      after: { title: updatedTask.title, status: updatedTask.status, priority: updatedTask.priority, assigneeId: updatedTask.assigneeId, estimatedHs: updatedTask.estimatedHs, loggedHs: updatedTask.loggedHs }
+    });
     await recordProjectEvent(updatedTask.projectId, userId, "TASK_UPDATED", `Se actualizó la tarea "${updatedTask.title}"`, { taskId: updatedTask.id, title: updatedTask.title });
 
     revalidatePath("/tareas");
@@ -147,7 +156,11 @@ export async function moveTaskStatus(taskId: string, newStatus: any) {
       data: { status: newStatus },
     });
 
-    await recordAuditLog(userId, "MOVE_TASK", "Movió la tarea en Kanban", `Tarea: ${updatedTask.title}`, { project: existing.project.name, before: { status: existing.status }, after: { status: newStatus } });
+    await recordAuditLog(userId, "MOVE_TASK", "Movió la tarea en Kanban", `Tarea: ${updatedTask.title}`, { 
+      project: existing.project.name, 
+      before: { status: existing.status }, 
+      after: { status: newStatus } 
+    });
     await recordProjectEvent(updatedTask.projectId, userId, "TASK_STATUS", `La tarea "${updatedTask.title}" se movió a ${newStatus}`, { taskId: updatedTask.id, before: existing.status, after: newStatus });
 
     const { processTaskStatusAutomations } = await import("../services/automationService");
@@ -173,7 +186,11 @@ export async function deleteTask(id: string) {
     if (task && task.project.workspaceId === workspace.id) {
       await prisma.task.delete({ where: { id } });
 
-      await recordAuditLog(userId, "DELETE_TASK", "Eliminó la tarea", `Tarea: ${task.title}`, { project: task.project.name });
+      await recordAuditLog(userId, "DELETE_TASK", "Eliminó la tarea", `Tarea: ${task.title}`, { 
+        project: task.project.name,
+        before: { title: task.title, status: task.status },
+        after: null
+      });
 
       revalidatePath("/tareas");
       revalidatePath(`/proyectos/${task.projectId}`);

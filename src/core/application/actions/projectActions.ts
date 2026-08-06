@@ -284,7 +284,10 @@ export async function createProject(data: {
     }
 
     await recordProjectEvent(newProject.id, userId, "PROJECT_CREATED", `Se creó el proyecto ${newProject.name} (${newProject.code})`);
-    await recordAuditLog(userId, "CREATE_PROJECT", `Creó el proyecto ${newProject.name}`, `Categoría: ${newProject.category}`);
+    await recordAuditLog(userId, "CREATE_PROJECT", `Creó el proyecto ${newProject.name}`, `Categoría: ${newProject.category}`, {
+      before: null,
+      after: { name: newProject.name, category: newProject.category, status: newProject.status, estimatedHours: newProject.estimatedHours }
+    });
 
     revalidatePath("/proyectos");
     return { success: true, data: newProject };
@@ -341,7 +344,10 @@ export async function updateProject(id: string, data: Partial<{
       await recordProjectEvent(id, userId, "STATUS_CHANGE", `Cambió el estado del proyecto de ${existing.status} a ${data.status}`);
     }
 
-    await recordAuditLog(userId, "UPDATE_PROJECT", `Actualizó el proyecto ${updatedProject.name}`, `Campos actualizados: ${Object.keys(data).join(", ")}`);
+    await recordAuditLog(userId, "UPDATE_PROJECT", `Actualizó el proyecto ${updatedProject.name}`, `Campos actualizados: ${Object.keys(data).join(", ")}`, {
+      before: { name: existing.name, status: existing.status, estimatedHours: existing.estimatedHours, category: existing.category },
+      after: { name: updatedProject.name, status: updatedProject.status, estimatedHours: updatedProject.estimatedHours, category: updatedProject.category }
+    });
 
     revalidatePath("/proyectos");
     revalidatePath(`/proyectos/${id}`);

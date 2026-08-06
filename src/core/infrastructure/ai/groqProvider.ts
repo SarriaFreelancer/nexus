@@ -22,7 +22,7 @@ export function createGroqProvider(apiKey: string): IAiProvider {
               { role: "user", content: userPrompt }
             ],
             temperature: 0.1,
-            max_tokens: 2000,
+            max_tokens: 4000,
             response_format: { type: "json_object" }
           })
         });
@@ -40,8 +40,11 @@ export function createGroqProvider(apiKey: string): IAiProvider {
           tokensOutput: data.usage?.completion_tokens || 0,
           model
         };
-      } catch (error) {
+      } catch (error: any) {
         console.error("[Groq Provider] Error:", error);
+        if (error?.cause?.code === 'ENOTFOUND' || error?.message?.includes('ENOTFOUND') || error?.message?.includes('fetch failed')) {
+          throw new Error("Error de red: No se pudo conectar a los servidores de Groq (api.groq.com). Revisa tu conexión a internet o firewall.");
+        }
         throw error;
       }
     }

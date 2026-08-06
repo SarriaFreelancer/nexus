@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { Tag, Plus, Webhook } from "lucide-react";
+import { Tag, Plus, Webhook, Key } from "lucide-react";
 import { CreateVersionModal } from "@/components/dashboard/CreateVersionModal";
 import { WebhookInfoModal } from "@/components/dashboard/WebhookInfoModal";
+import { GitConfigModal } from "@/components/dashboard/GitConfigModal";
 
 export function VersionesHeader({ projects }: { projects: any[] }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
+  const [isGitModalOpen, setIsGitModalOpen] = useState(false);
 
   return (
     <>
@@ -22,6 +24,14 @@ export function VersionesHeader({ projects }: { projects: any[] }) {
         </div>
 
         <div className="flex items-center gap-3 self-start">
+          <button 
+            onClick={() => setIsGitModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all"
+          >
+            <Key className="h-4 w-4 text-amber-500" />
+            <span>Configurar Token GitHub</span>
+          </button>
+
           <button 
             onClick={() => setIsWebhookModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-[#0f1424] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all"
@@ -49,6 +59,12 @@ export function VersionesHeader({ projects }: { projects: any[] }) {
       <WebhookInfoModal
         isOpen={isWebhookModalOpen}
         onClose={() => setIsWebhookModalOpen(false)}
+        projects={projects}
+      />
+
+      <GitConfigModal
+        isOpen={isGitModalOpen}
+        onClose={() => setIsGitModalOpen(false)}
         projects={projects}
       />
     </>

@@ -17,8 +17,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No se proporcionó archivo" }, { status: 400 });
     }
 
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "El archivo debe ser una imagen" }, { status: 400 });
+    const isImage = file.type ? file.type.startsWith("image/") : false;
+    const isDoc = (file.type && (file.type.includes("pdf") || file.type.includes("document") || file.type.includes("msword") || file.type.includes("presentation") || file.type.includes("spreadsheet") || file.type.includes("text") || file.type.includes("vsdx"))) || 
+                  (file.name && (file.name.toLowerCase().endsWith(".vsdx") || file.name.toLowerCase().endsWith(".pdf")));
+
+    if (!isImage && !isDoc) {
+      return NextResponse.json({ error: "El archivo no es una imagen ni un documento soportado" }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();
@@ -26,7 +30,8 @@ export async function POST(req: NextRequest) {
 
     // Create unique filename
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const filename = `${uniqueSuffix}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+    const originalName = file.name || "documento_adjunto";
+    const filename = `${uniqueSuffix}-${originalName.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
     
     // Ensure uploads directory exists
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
@@ -43,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, url: fileUrl });
   } catch (error: any) {
-    console.error("Upload error:", error);
-    return NextResponse.json({ error: "Error al subir el archivo" }, { status: 500 });
+    console.error("Upload error details:", error);
+    return NextResponse.json({ error: `Error interno al subir el archivo: ${error.message || error.toString()}` }, { status: 500 });
   }
 }

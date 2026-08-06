@@ -87,9 +87,15 @@ export async function getNotifications() {
       // If task is OVERDUE
       if (dueDateObj < now) {
         const title = `🚨 Tarea Vencida: ${task.title}`;
+        const oldTitle = `⏳ Próxima a Vencer: ${task.title}`;
         const message = `La tarea "${task.title}" del proyecto "${task.project.name}" venció el ${formattedDate}. ¡Requiere atención urgente!`;
         
         for (const targetUserId of memberUserIds) {
+          // Cleanup conflicting state
+          await prisma.notification.deleteMany({
+            where: { userId: targetUserId, title: oldTitle }
+          });
+
           const existing = await prisma.notification.findFirst({
             where: { userId: targetUserId, title }
           });
@@ -109,9 +115,15 @@ export async function getNotifications() {
       // If task is DUE SOON (next 48h)
       else if (dueDateObj <= next48h) {
         const title = `⏳ Próxima a Vencer: ${task.title}`;
+        const oldTitle = `🚨 Tarea Vencida: ${task.title}`;
         const message = `La tarea "${task.title}" del proyecto "${task.project.name}" vence el ${formattedDate} (en las próximas 48h).`;
         
         for (const targetUserId of memberUserIds) {
+          // Cleanup conflicting state
+          await prisma.notification.deleteMany({
+            where: { userId: targetUserId, title: oldTitle }
+          });
+
           const existing = await prisma.notification.findFirst({
             where: { userId: targetUserId, title }
           });
@@ -126,6 +138,17 @@ export async function getNotifications() {
               }
             });
           }
+        }
+      }
+      // If task is safely in the future (neither overdue nor due soon)
+      else {
+        for (const targetUserId of memberUserIds) {
+          await prisma.notification.deleteMany({
+            where: { 
+              userId: targetUserId, 
+              title: { in: [`🚨 Tarea Vencida: ${task.title}`, `⏳ Próxima a Vencer: ${task.title}`] }
+            }
+          });
         }
       }
     }

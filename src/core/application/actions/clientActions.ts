@@ -70,7 +70,12 @@ export async function createClient(data: {
       },
     });
 
-    await recordAuditLog(userId, "CREATE_CLIENT", "Creó un nuevo cliente/lead", `Cliente: ${newClient.company}`, { contact: newClient.contactName, stage: newClient.stage });
+    await recordAuditLog(userId, "CREATE_CLIENT", "Creó un nuevo cliente/lead", `Cliente: ${newClient.company}`, { 
+      contact: newClient.contactName, 
+      stage: newClient.stage,
+      before: null,
+      after: { company: newClient.company, contact: newClient.contactName, stage: newClient.stage, email: newClient.email }
+    });
 
     revalidatePath("/clientes");
     return { success: true, data: newClient };
@@ -97,7 +102,11 @@ export async function updateClient(id: string, data: Partial<any>) {
       data,
     });
 
-    await recordAuditLog(userId, "UPDATE_CLIENT", "Editó el cliente/lead", `Cliente: ${updatedClient.company}`, { updatedFields: Object.keys(data) });
+    await recordAuditLog(userId, "UPDATE_CLIENT", "Editó el cliente/lead", `Cliente: ${updatedClient.company}`, { 
+      updatedFields: Object.keys(data),
+      before: { company: existing.company, contactName: existing.contactName, stage: existing.stage, email: existing.email },
+      after: { company: updatedClient.company, contactName: updatedClient.contactName, stage: updatedClient.stage, email: updatedClient.email }
+    });
 
     revalidatePath("/clientes");
     return { success: true, data: updatedClient };
