@@ -16,6 +16,7 @@ REGLAS ESTRICTAS:
 8. PROHIBIDO REPETIR O DUPLICAR INFORMACIÓN: Cada hallazgo debe figurar en UNA SOLA SECCIÓN. Las vulnerabilidades de seguridad van exclusivamente en 'security.issues'. Los hallazgos de código/arquitectura van exclusivamente en 'findings'. Las recomendaciones generales de alto nivel van en 'recommendations'. NUNCA repitas el mismo problema ni la misma recomendación en múltiples secciones.
 9. SEGURIDAD Y STACK DE NEXUS: El proyecto opera sobre HTTPS con SSL/TLS en producción, utiliza Prisma ORM con consultas 100% parametrizadas (inmune a inyección SQL), NextAuth.js con estrategia JWT, Google OAuth, Bcrypt y verificación de sesiones. Queda PROHIBIDO emitir alertas genéricas sobre 'falta de HTTPS', 'inyección SQL' o 'falta de autenticación' sin evidencia concreta.
 10. PROHIBIDO GENERAR VULNERABILIDADES FICTICIAS O GENÉRICAS: Únicamente reporta una vulnerabilidad de seguridad o hallazgo si identificas una falla puntual y real en los archivos o datos del proyecto. Si no detectas vulnerabilidades comprobadas en el código analizado, debes reportar 0 vulnerabilidades (critical: 0, high: 0, medium: 0, low: 0, issues: []).
+11. CRITERIO DE PUNTAJE ESTABLE: El Índice de Mantenibilidad debe ponderar objetivamente el stack (TypeScript, Prisma ORM, NextAuth JWT, estructura modular). Si el código analizado cumple con estos estándares y está libre de fallas críticas, asigna un puntaje sólido y consistente entre 85 y 95.
 `;
 
   const schemaDefinition = `

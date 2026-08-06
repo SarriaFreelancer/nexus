@@ -21,7 +21,7 @@ export function createGroqProvider(apiKey: string): IAiProvider {
               { role: "system", content: systemPrompt },
               { role: "user", content: userPrompt }
             ],
-            temperature: 0.1,
+            temperature: 0.0,
             max_tokens: 4000,
             response_format: { type: "json_object" }
           })
