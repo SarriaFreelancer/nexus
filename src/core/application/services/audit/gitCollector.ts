@@ -27,7 +27,7 @@ export async function collectGitContext(gitRepoUrl: string, gitToken: string | n
     const branches = branchesRes.ok ? await branchesRes.json() : [];
 
     // Commits
-    const commitsRes = await fetch(`https://api.github.com/repos/${repo}/commits?per_page=30`, { headers, cache: "no-store" });
+    const commitsRes = await fetch(`https://api.github.com/repos/${repo}/commits?per_page=10`, { headers, cache: "no-store" });
     const commitsData = commitsRes.ok ? await commitsRes.json() : [];
     
     const recentCommits: GitCommit[] = commitsData.map((c: any) => ({
@@ -50,7 +50,7 @@ export async function collectGitContext(gitRepoUrl: string, gitToken: string | n
     const treeData = treeRes.ok ? await treeRes.json() : { tree: [] };
     
     // Limit tree items in context
-    const MAX_TREE_ITEMS = 200;
+    const MAX_TREE_ITEMS = 40;
     const allTreeItems = treeData.tree || [];
     
     // Only pass the most relevant items to the prompt (prioritize src, app, lib, exclude node_modules/dist)

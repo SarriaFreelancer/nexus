@@ -117,7 +117,7 @@ Analiza el siguiente contexto del proyecto y devuelve el JSON de auditoría corr
 Considera aspectos de arquitectura, calidad de código, dependencias, seguridad, rendimiento, base de datos, equipo y documentación.
 
 CONTEXTO DEL PROYECTO (JSON):
-${JSON.stringify(context, null, 2)}
+${JSON.stringify(context)}
 
 ESQUEMA ESPERADO (JSON):
 ${schemaDefinition}

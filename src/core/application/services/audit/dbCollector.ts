@@ -114,7 +114,7 @@ export async function collectDatabaseContext(projectId: string, workspaceId: str
       changelog: latestVersion.changelog || ""
     } : null,
     releaseFrequencyDays,
-    versions: sortedVersions.map(v => ({
+    versions: sortedVersions.slice(0, 5).map(v => ({
       version: v.version,
       title: v.title,
       releaseDate: v.releaseDate.toISOString(),

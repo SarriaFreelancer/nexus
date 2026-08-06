@@ -123,3 +123,30 @@ export async function updateVersion(id: string, data: {
     return { success: false, error: error.message };
   }
 }
+
+export async function deleteVersion(id: string) {
+  try {
+    const { workspace } = await getCurrentWorkspace();
+
+    const existing = await prisma.projectVersion.findUnique({
+      where: { id },
+      include: { project: true }
+    });
+
+    if (!existing) throw new Error("Versión no encontrada");
+    if (existing.project.workspaceId !== workspace.id) throw new Error("No autorizado");
+
+    await prisma.projectVersion.delete({
+      where: { id }
+    });
+
+    revalidatePath("/versiones");
+    revalidatePath("/proyectos");
+    revalidatePath(`/proyectos/${existing.projectId}`);
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+

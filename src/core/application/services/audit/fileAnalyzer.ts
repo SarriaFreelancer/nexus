@@ -146,19 +146,19 @@ export async function analyzeProjectFiles(
       return relevantExtensions.some(ext => pathStr.endsWith(ext));
     });
 
-    // Prioritize src/ and take up to 15 key files for deep analysis
+    // Prioritize src/ and take up to 10 key files for deep analysis
     const sortedFiles = candidateFiles.sort((a, b) => {
       const aSrc = a.path.startsWith('src/') ? -1 : 1;
       const bSrc = b.path.startsWith('src/') ? -1 : 1;
       if (aSrc !== bSrc) return aSrc - bSrc;
       return (a.size || 0) - (b.size || 0); // Smaller files first after src priority
-    }).slice(0, 15);
+    }).slice(0, 10);
 
     // Fetch in chunks of 5
     const chunkSize = 5;
     let totalChars = 0;
-    // Cap code characters at 12,000 to respect Groq Free Tier limit (12,000 TPM)
-    const MAX_CHARS = 12000;
+    // Cap code characters at 8,000 to keep overall prompt context ~5,000 tokens (well below Groq 12,000 TPM limit)
+    const MAX_CHARS = 8000;
 
     for (let i = 0; i < sortedFiles.length; i += chunkSize) {
       if (totalChars >= MAX_CHARS) break;
