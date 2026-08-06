@@ -14,6 +14,7 @@ REGLAS ESTRICTAS:
 6. Ahora el contexto incluye 'files.sourceFiles' con el código fuente real de los archivos más importantes del proyecto. DEBES leer y analizar este código para detectar vulnerabilidades, patrones de arquitectura, antipatrones y deuda técnica.
 7. Al crear 'findings' (hallazgos), DEBES indicar el nombre del archivo ('file') y la línea ('line') exacta si detectas un problema específico en el código fuente provisto.
 8. PROHIBIDO REPETIR O DUPLICAR INFORMACIÓN: Cada hallazgo debe figurar en UNA SOLA SECCIÓN. Las vulnerabilidades de seguridad van exclusivamente en 'security.issues'. Los hallazgos de código/arquitectura van exclusivamente en 'findings'. Las recomendaciones generales de alto nivel van en 'recommendations'. NUNCA repitas el mismo problema ni la misma recomendación en múltiples secciones.
+9. ARQUITECTURA Y SEGURIDAD RECONOCIDA: El proyecto Nexus cuenta con NextAuth.js (estrategia JWT), Google OAuth, hashing Bcrypt (10 rondas), Prisma ORM (consultas parametrizadas inmunes a SQL Injection), verificación de sesión/roles en API Routes/Server Actions y AuditLog. NO recomiendes implementar OAuth, JWT o prevención de SQLi como si no existieran; reconócelos como fortalezas del sistema.
 `;
 
   const schemaDefinition = `

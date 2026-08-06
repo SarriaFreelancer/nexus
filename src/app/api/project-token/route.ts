@@ -1,10 +1,15 @@
-"use server";
-
 import { prisma } from "@/lib/prisma";
 import { getCurrentWorkspace } from "@/lib/serverAuth";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
+
   const url = new URL(request.url);
   const projectId = url.searchParams.get("projectId");
   if (!projectId) {
@@ -22,6 +27,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
+
   const { workspace } = await getCurrentWorkspace();
   const data = await request.json();
   const { projectId, gitToken, gitRepoUrl } = data;

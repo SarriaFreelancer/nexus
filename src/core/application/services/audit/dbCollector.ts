@@ -59,7 +59,15 @@ export async function collectDatabaseContext(projectId: string, workspaceId: str
     endDate: project.endDate?.toISOString() || null,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
-    clientName: project.client?.company || null
+    clientName: project.client?.company || null,
+    securityArchitecture: {
+      authStrategy: "NextAuth.js JWT",
+      oauthProviders: ["Google OAuth 2.0"],
+      passwordHashing: "Bcrypt (10 salt rounds)",
+      orm: "Prisma ORM (Parameterized Queries)",
+      routeProtection: "Session & Role Auth (SUPER_ADMIN, ADMIN, USER)",
+      auditLogging: "AuditLog enabled"
+    }
   };
 
   // --- Tasks ---
