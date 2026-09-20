@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user || !(session.user as any).id) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
@@ -38,7 +38,7 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user || !(session.user as any).id) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 

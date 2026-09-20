@@ -5,7 +5,7 @@ import {
   Folder, FileText, Plus, Search, Star, Download, X, 
   MoreHorizontal, Code2, Database, Server, Shield, Layers, 
   LayoutTemplate, FileDown, ChevronRight, File, BookOpen,
-  ZoomIn, ZoomOut, Printer, Maximize, Filter, ArrowLeft, FolderPlus
+  ZoomIn, ZoomOut, Printer, Maximize, Filter, ArrowLeft, FolderPlus, Loader2
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal, ConfirmVariant } from "@/components/ui/ConfirmModal";

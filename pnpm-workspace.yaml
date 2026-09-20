@@ -1,9 +1,0 @@
-allowBuilds:
-  '@prisma/client': false
-  '@prisma/engines': false
-  prisma: false
-  sharp: false
-  unrs-resolver: false
-minimumReleaseAgeExclude:
-  - framer-motion@12.43.0
-  - motion-dom@12.43.0

@@ -18,13 +18,15 @@ export const config = {
     /*
      * Match all request paths except for the ones starting with:
      * - api/auth (NextAuth endpoints)
+     * - api/pusher (Pusher auth endpoints)
      * - login (login page)
      * - register (register page)
+     * - service-worker.js (Pusher service worker)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public (public folder)
+     * - static assets with extensions (.svg, .png, .jpg, .jpeg, .gif, .webp, .ico, .js)
      */
-    "/((?!api/auth|login|register|_next/static|_next/image|favicon.ico|$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api/auth|api/pusher|login|register|service-worker.js|_next/static|_next/image|favicon.ico|$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|js)$).*)",
   ],
 };

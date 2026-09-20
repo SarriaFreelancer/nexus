@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Navbar } from "@/components/layout/Navbar";
+import { FloatingChatWidget } from "@/components/chat/FloatingChatWidget";
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -21,6 +22,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      {pathname !== "/chat" && <FloatingChatWidget />}
     </div>
   );
 }

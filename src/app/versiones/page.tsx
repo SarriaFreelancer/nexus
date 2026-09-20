@@ -63,13 +63,14 @@ export default function VersionesPage() {
     itemName?: string;
     description?: string;
     warningText?: string;
-    confirmText?: string;
+    confirmText: string;
     variant?: "danger" | "warning" | "success";
-    icon?: "trash" | "alert" | "info" | "folder" | "file";
+    icon?: "trash" | "alert" | "restore" | "folder" | "file";
     onConfirm: () => void;
   }>({
     isOpen: false,
     title: "",
+    confirmText: "Confirmar",
     onConfirm: () => {},
   });
 

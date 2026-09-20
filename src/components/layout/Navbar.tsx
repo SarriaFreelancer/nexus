@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Search, Plus, Bell, Calendar, SlidersHorizontal, ShieldCheck } from "lucide-react";
+import { Search, Plus, Bell, Calendar, SlidersHorizontal, ShieldCheck, MessageSquare } from "lucide-react";
 import { mockCurrentUser } from "@/core/infrastructure/mockData";
 import { CommandPalette } from "./CommandPalette";
 import { ThemeToggle } from "./ThemeToggle";
@@ -58,6 +59,15 @@ export const Navbar: React.FC = () => {
           >
             <Plus className="h-4 w-4" />
           </button>
+
+          {/* Quick Chat Action */}
+          <Link
+            href="/chat"
+            className="cursor-pointer h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center transition-all relative"
+            title="Abrir Mensajería"
+          >
+            <MessageSquare className="h-4 w-4 text-indigo-400" />
+          </Link>
 
           <NotificationBell />
 

@@ -17,7 +17,8 @@ import {
   ShieldAlert,
   Users as UsersCore,
   Crown,
-  TrendingUp
+  TrendingUp,
+  MessageSquare
 } from "lucide-react";
 
 export interface NavItem {
@@ -31,6 +32,7 @@ export interface NavItem {
 
 export const navigationItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Mensajes", href: "/chat", icon: MessageSquare },
   { title: "Proyectos", href: "/proyectos", icon: FolderKanban },
   { title: "Tareas", href: "/tareas", icon: CheckSquare },
   { title: "Roadmaps", href: "/roadmaps", icon: GitFork },

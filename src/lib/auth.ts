@@ -6,6 +6,17 @@ import { randomUUID } from "crypto";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
+async function getHeaderMetadata() {
+  try {
+    const headersList = await headers();
+    const ip = headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || "Unknown IP";
+    const browser = headersList.get("user-agent") || "Unknown Browser";
+    return { ip, browser };
+  } catch (e) {
+    return { ip: "Unknown IP", browser: "Unknown Browser" };
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -24,10 +35,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const cleanEmail = credentials.email.trim().toLowerCase();
-        
-        const headersList = await headers();
-        const ip = headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || "Unknown IP";
-        const browser = headersList.get("user-agent") || "Unknown Browser";
+        const { ip, browser } = await getHeaderMetadata();
 
         const user = await prisma.user.findUnique({
           where: { email: cleanEmail }
@@ -113,9 +121,7 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "google") {
         if (!user.email) return false;
         
-        const headersList = await headers();
-        const ip = headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || "Unknown IP";
-        const browser = headersList.get("user-agent") || "Unknown Browser";
+        const { ip, browser } = await getHeaderMetadata();
         
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email }

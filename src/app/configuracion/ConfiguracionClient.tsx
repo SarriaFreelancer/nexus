@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { seedTestData, clearTestData } from "@/core/application/actions/seedActions";
 import { resetGuidedTour } from "@/core/application/actions/tourActions";
 import { useSession } from "next-auth/react";
+import { DatabaseBackupManager } from "./DatabaseBackupManager";
 
 export default function ConfiguracionPage() {
   const { data: session, update } = useSession();
@@ -72,6 +73,10 @@ export default function ConfiguracionPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <DatabaseBackupManager />
         </div>
 
         <div className="space-y-6">
