@@ -28,7 +28,12 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Create unique filename
+    // If it's a profile avatar image (smaller than 4MB), encode as data URL or write to public/uploads
+    const base64Data = buffer.toString("base64");
+    const mimeType = file.type || "image/jpeg";
+    const dataUrl = `data:${mimeType};base64,${base64Data}`;
+
+    // Create unique filename on disk as well
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const originalName = file.name || "documento_adjunto";
     const filename = `${uniqueSuffix}-${originalName.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
@@ -37,14 +42,14 @@ export async function POST(req: NextRequest) {
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
     try {
       await mkdir(uploadsDir, { recursive: true });
+      const filepath = path.join(uploadsDir, filename);
+      await writeFile(filepath, buffer);
     } catch (e) {
-      // Ignore if directory exists
+      // Ignore if write fails
     }
 
-    const filepath = path.join(uploadsDir, filename);
-    await writeFile(filepath, buffer);
-
-    const fileUrl = `/uploads/${filename}`;
+    // For images, returning dataUrl guarantees instant and persistent display across Docker container rebuilds
+    const fileUrl = isImage ? dataUrl : `/uploads/${filename}`;
 
     return NextResponse.json({ success: true, url: fileUrl });
   } catch (error: any) {
