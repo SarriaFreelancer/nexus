@@ -1,14 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getAllGlobalUsersAndWorkspaces, updateWorkspaceSubscription } from "@/core/application/actions/superadminActions";
+import { useSession } from "next-auth/react";
+import { getAllGlobalUsersAndWorkspaces, updateWorkspaceSubscription, deleteGlobalUser } from "@/core/application/actions/superadminActions";
 import { Modal } from "@/components/ui/Modal";
 import { 
   Crown, Users, Building, FolderKanban, ShieldCheck, 
-  Sparkles, CheckCircle2, Loader2, Edit3, Settings, ShieldAlert, BadgeCheck
+  Sparkles, CheckCircle2, Loader2, Edit3, Settings, ShieldAlert, BadgeCheck, Trash2, AlertTriangle
 } from "lucide-react";
 
 export default function SuperAdminPage() {
+  const { data: session } = useSession();
+  const currentUserId = (session?.user as any)?.id;
+  const currentUserEmail = session?.user?.email;
+
   const [data, setData] = useState<{ users: any[]; workspaces: any[] }>({ users: [], workspaces: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -21,6 +26,12 @@ export default function SuperAdminPage() {
   const [maxProjects, setMaxProjects] = useState(3);
   const [maxCollaborators, setMaxCollaborators] = useState(5);
   const [savingPlan, setSavingPlan] = useState(false);
+
+  // Delete User Modal
+  const [userToDelete, setUserToDelete] = useState<any | null>(null);
+  const [isDeleteUserModalOpen, setIsDeleteUserModalOpen] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const loadData = async () => {
     setLoading(true);
@@ -91,6 +102,28 @@ export default function SuperAdminPage() {
       alert("Error al actualizar plan de licencia: " + res.error);
     }
     setSavingPlan(false);
+  };
+
+  const handleOpenDeleteUser = (user: any) => {
+    setUserToDelete(user);
+    setDeleteError("");
+    setIsDeleteUserModalOpen(true);
+  };
+
+  const handleConfirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    setDeletingUser(true);
+    setDeleteError("");
+
+    const res = await deleteGlobalUser(userToDelete.id);
+    if (res.success) {
+      setIsDeleteUserModalOpen(false);
+      setUserToDelete(null);
+      loadData();
+    } else {
+      setDeleteError(res.error || "Error al eliminar el usuario");
+    }
+    setDeletingUser(false);
   };
 
   if (loading) {
@@ -274,7 +307,8 @@ export default function SuperAdminPage() {
                   <th className="p-4">Email</th>
                   <th className="p-4 text-center">Rol Global</th>
                   <th className="p-4 text-center">Espacios Pertenecientes</th>
-                  <th className="p-4 text-right">Fecha Registro</th>
+                  <th className="p-4 text-center">Fecha Registro</th>
+                  <th className="p-4 text-right">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
@@ -301,8 +335,26 @@ export default function SuperAdminPage() {
                       {u.memberships?.length || 0} Espacio(s)
                     </td>
 
-                    <td className="p-4 text-right text-slate-500">
+                    <td className="p-4 text-center text-slate-500">
                       {new Date(u.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </td>
+
+                    <td className="p-4 text-right">
+                      {u.id === currentUserId || u.email === "superadmin@nexus.com" ? (
+                        <span className="text-[10px] text-slate-500 font-semibold italic px-2 py-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg">
+                          Cuenta Principal
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenDeleteUser(u)}
+                          className="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ml-auto cursor-pointer"
+                          title="Eliminar usuario permanentemente"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Eliminar</span>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -413,6 +465,57 @@ export default function SuperAdminPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal para Confirmar Eliminación de Usuario */}
+      <Modal isOpen={isDeleteUserModalOpen} onClose={() => !deletingUser && setIsDeleteUserModalOpen(false)} title="Eliminar Usuario del Sistema">
+        <div className="space-y-4 text-xs">
+          <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="font-bold text-rose-300 text-sm">¿Eliminar usuario permanentemente?</h4>
+              <p className="text-slate-300 leading-relaxed">
+                Estás a punto de eliminar a <strong className="text-white">{userToDelete?.name}</strong> (<span className="text-indigo-300 font-mono">{userToDelete?.email}</span>).
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2 bg-slate-900/60 border border-slate-800 p-3.5 rounded-xl text-slate-300">
+            <p className="font-bold text-white text-[11px]">Esta acción realizará automáticamente:</p>
+            <ul className="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
+              <li>Eliminación de sus espacios de trabajo personales y todos sus tableros.</li>
+              <li>Desvinculación y limpieza de tareas asignadas en otros proyectos.</li>
+              <li>Eliminación de registros de horas (TimeEntries), eventos y auditorías creadas.</li>
+              <li>Eliminación de membresías y mensajes de chat.</li>
+            </ul>
+          </div>
+
+          {deleteError && (
+            <div className="p-3 bg-rose-500/20 border border-rose-500/40 text-rose-300 rounded-xl text-center font-medium">
+              {deleteError}
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800/80">
+            <button
+              type="button"
+              disabled={deletingUser}
+              onClick={() => setIsDeleteUserModalOpen(false)}
+              className="px-4 py-2 rounded-xl text-slate-500 dark:text-slate-400 font-medium hover:text-slate-200 cursor-pointer disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              disabled={deletingUser}
+              onClick={handleConfirmDeleteUser}
+              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer shadow-lg shadow-rose-600/30"
+            >
+              {deletingUser ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              <span>{deletingUser ? "Eliminando..." : "Sí, Eliminar Usuario"}</span>
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
