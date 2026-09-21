@@ -39,27 +39,52 @@ export function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     fileInputRef.current?.click();
   };
 
+  // Helper to resize and compress avatar image to clean 256x256 jpeg data URL
+  const resizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const size = 256;
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+
+          // Center crop to square
+          const minDim = Math.min(img.width, img.height);
+          const startX = (img.width - minDim) / 2;
+          const startY = (img.height - minDim) / 2;
+
+          ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, size, size);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          resolve(compressedDataUrl);
+        };
+        img.onerror = reject;
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
     try {
-      const uploadData = new FormData();
-      uploadData.append("file", file);
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: uploadData,
-      });
-
-      if (!res.ok) throw new Error("Error al subir imagen");
-      
-      const { url } = await res.json();
-      setFormData(prev => ({ ...prev, avatarUrl: url }));
+      // Compress and convert to clean avatar Data URL
+      const optimizedAvatar = await resizeImage(file);
+      setFormData(prev => ({ ...prev, avatarUrl: optimizedAvatar }));
     } catch (error) {
       console.error(error);
-      alert("No se pudo subir la imagen");
+      alert("No se pudo procesar la imagen");
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
