@@ -167,6 +167,7 @@ function LoginForm() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
                     placeholder="tucorreo@empresa.com"
                     className={`w-full border rounded-xl pl-10 pr-3 py-2 text-xs outline-none transition-all ${
                       isDarkMode
@@ -187,6 +188,7 @@ function LoginForm() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
                     placeholder="Ingresa tu contraseña"
                     className={`w-full border rounded-xl pl-10 pr-9 py-2 text-xs outline-none transition-all ${
                       isDarkMode
