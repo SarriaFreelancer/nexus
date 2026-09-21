@@ -183,13 +183,17 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
-        token.picture = (user as any).avatarUrl || (user as any).image;
+        const pic = (user as any).avatarUrl || (user as any).image;
+        // Never put base64 data URLs in JWT cookies to prevent HTTP 431
+        token.picture = typeof pic === "string" && !pic.startsWith("data:") ? pic : undefined;
         token.preferences = (user as any).preferences;
       }
       if (trigger === "update" && session) {
         if (session.name) token.name = session.name;
-        if (session.picture || session.image || session.avatarUrl) {
-          token.picture = session.picture || session.image || session.avatarUrl;
+        const newPic = session.picture || session.image || session.avatarUrl;
+        if (newPic) {
+          // If a base64 was passed, ignore it in the cookie to keep it under 4KB
+          token.picture = typeof newPic === "string" && !newPic.startsWith("data:") ? newPic : undefined;
         }
         if (session.preferences !== undefined) token.preferences = session.preferences;
       }
