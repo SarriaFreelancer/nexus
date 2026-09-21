@@ -42,14 +42,15 @@ export async function POST(req: NextRequest) {
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
     try {
       await mkdir(uploadsDir, { recursive: true });
-      const filepath = path.join(uploadsDir, filename);
-      await writeFile(filepath, buffer);
     } catch (e) {
-      // Ignore if write fails
+      // Ignore if exists
     }
 
-    // For images, returning dataUrl guarantees instant and persistent display across Docker container rebuilds
-    const fileUrl = isImage ? dataUrl : `/uploads/${filename}`;
+    const filepath = path.join(uploadsDir, filename);
+    await writeFile(filepath, buffer);
+
+    // Always serve via custom Next.js API route to ensure reliable delivery in Docker/Dokploy
+    const fileUrl = `/api/uploads/${filename}`;
 
     return NextResponse.json({ success: true, url: fileUrl });
   } catch (error: any) {

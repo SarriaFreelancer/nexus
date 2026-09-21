@@ -39,8 +39,8 @@ export function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     fileInputRef.current?.click();
   };
 
-  // Helper to resize and compress avatar image to clean 256x256 jpeg data URL
-  const resizeImage = (file: File): Promise<string> => {
+  // Helper to resize and compress avatar image to clean 256x256 jpeg Blob
+  const resizeImageToBlob = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -52,7 +52,7 @@ export function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
           canvas.height = size;
           const ctx = canvas.getContext("2d");
           if (!ctx) {
-            resolve(event.target?.result as string);
+            resolve(file);
             return;
           }
 
@@ -62,8 +62,10 @@ export function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
           const startY = (img.height - minDim) / 2;
 
           ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, size, size);
-          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
-          resolve(compressedDataUrl);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else resolve(file);
+          }, "image/jpeg", 0.9);
         };
         img.onerror = reject;
         img.src = event.target?.result as string;
@@ -79,12 +81,25 @@ export function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 
     setUploading(true);
     try {
-      // Compress and convert to clean avatar Data URL
-      const optimizedAvatar = await resizeImage(file);
-      setFormData(prev => ({ ...prev, avatarUrl: optimizedAvatar }));
+      // 1. Optimize image to 256x256 jpeg
+      const optimizedBlob = await resizeImageToBlob(file);
+
+      // 2. Upload to /api/upload endpoint
+      const uploadData = new FormData();
+      uploadData.append("file", optimizedBlob, "avatar.jpg");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      if (!res.ok) throw new Error("Error al subir imagen");
+      
+      const { url } = await res.json();
+      setFormData(prev => ({ ...prev, avatarUrl: url }));
     } catch (error) {
       console.error(error);
-      alert("No se pudo procesar la imagen");
+      alert("No se pudo subir la imagen");
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
