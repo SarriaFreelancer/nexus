@@ -217,34 +217,6 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 2 * 60 * 60, // 2 horas (expira la sesión real del servidor/cookie)
   },
-  cookies: {
-    sessionToken: {
-      name: `nexus_auth_token_v2`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-    callbackUrl: {
-      name: `nexus_callback_v2`,
-      options: {
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-    csrfToken: {
-      name: `nexus_csrf_v2`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-  },
   pages: {
     signIn: "/login",
   },

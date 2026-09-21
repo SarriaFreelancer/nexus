@@ -24,6 +24,8 @@ function LoginForm() {
     setIsLoading(true);
     setError("");
 
+    const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+
     const result = await signIn("credentials", {
       redirect: false,
       email,
@@ -34,8 +36,7 @@ function LoginForm() {
       setError("Credenciales inválidas. Por favor, verifica tu correo y contraseña.");
       setIsLoading(false);
     } else {
-      router.push("/");
-      router.refresh();
+      window.location.href = callbackUrl;
     }
   };
 
@@ -253,7 +254,7 @@ function LoginForm() {
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
-                  onClick={() => signIn("google", { callbackUrl: "/" })}
+                  onClick={() => signIn("google", { callbackUrl: searchParams.get("callbackUrl") || "/dashboard" })}
                   className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#0d1322] hover:bg-slate-800/80 border border-slate-800 text-[11px] font-semibold text-slate-300 transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
