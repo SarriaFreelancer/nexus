@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Search, Plus, Bell, Calendar, SlidersHorizontal, ShieldCheck, MessageSquare } from "lucide-react";
+import { Search, Plus, Bell, Calendar, SlidersHorizontal, ShieldCheck, MessageSquare, PanelLeft } from "lucide-react";
 import { mockCurrentUser } from "@/core/infrastructure/mockData";
 import { CommandPalette } from "./CommandPalette";
 import { ThemeToggle } from "./ThemeToggle";
@@ -26,8 +26,15 @@ export const Navbar: React.FC = () => {
   return (
     <>
       <header className="h-16 px-6 border-b border-slate-200 dark:border-slate-800/60 bg-slate-50 dark:bg-[#090c15]/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-20">
-        {/* Search Bar Spotlight Trigger */}
-        <div className="flex items-center gap-4">
+        {/* Left Actions: Sidebar Toggle & Search Trigger */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.dispatchEvent(new Event("toggle-nexus-sidebar"))}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all cursor-pointer"
+            title="Alternar menú lateral"
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
           <button
             onClick={() => setIsCommandOpen(true)}
             className="cursor-pointer flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/80 hover:border-indigo-500/50 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 text-xs w-80 transition-all shadow-inner"

@@ -26,6 +26,39 @@ export const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  // Load and sync collapsed state with localStorage and window events
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("nexus_sidebar_collapsed");
+      if (saved !== null) {
+        setCollapsed(saved === "true");
+      }
+    } catch (e) {}
+
+    const handleToggleEvent = () => {
+      setCollapsed((prev) => {
+        const next = !prev;
+        try {
+          localStorage.setItem("nexus_sidebar_collapsed", String(next));
+        } catch (e) {}
+        return next;
+      });
+    };
+
+    window.addEventListener("toggle-nexus-sidebar", handleToggleEvent);
+    return () => window.removeEventListener("toggle-nexus-sidebar", handleToggleEvent);
+  }, []);
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("nexus_sidebar_collapsed", String(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
   const currentUser = {
     name: session?.user?.name || mockCurrentUser.name,
     email: session?.user?.email || mockCurrentUser.email,
@@ -93,25 +126,41 @@ export const Sidebar: React.FC = () => {
       )}
     >
       {/* Top Header & Workspace Selector */}
-      <div className="p-4 space-y-4">
-        {/* App Logo */}
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl overflow-hidden ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/30 shrink-0">
-            <img
-              src="/nexus-logo-n.jpg"
-              alt="NEXUS Emblem"
-              className="h-full w-full object-cover"
-            />
+      <div className="p-3 sm:p-4 space-y-3">
+        {/* App Logo & Collapse Toggle */}
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between")}>
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={collapsed ? toggleCollapsed : undefined}
+              className="h-9 w-9 rounded-xl overflow-hidden ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/30 shrink-0 cursor-pointer hover:ring-indigo-400 transition-all"
+              title={collapsed ? "Expandir menú lateral" : "NEXUS"}
+            >
+              <img
+                src="/nexus-logo-n.jpg"
+                alt="NEXUS Emblem"
+                className="h-full w-full object-cover"
+              />
+            </button>
+            {!collapsed && (
+              <div className="min-w-0">
+                <h1 className="font-extrabold text-white tracking-wider text-base leading-tight">
+                  NEXUS
+                </h1>
+                <p className="text-[10px] text-slate-400 font-medium tracking-tight">
+                  Development Operations
+                </p>
+              </div>
+            )}
           </div>
+
           {!collapsed && (
-            <div>
-              <h1 className="font-extrabold text-white tracking-wider text-base leading-tight">
-                NEXUS
-              </h1>
-              <p className="text-[10px] text-slate-400 font-medium tracking-tight">
-                Development Operations
-              </p>
-            </div>
+            <button
+              onClick={toggleCollapsed}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors cursor-pointer"
+              title="Contraer menú lateral"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </button>
           )}
         </div>
 
@@ -200,9 +249,9 @@ export const Sidebar: React.FC = () => {
         ) : (
           <div className="flex justify-center">
             <div
-              className="h-8 w-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-md cursor-pointer"
+              className="h-8 w-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-md cursor-pointer hover:scale-105 transition-transform"
               title={activeWorkspace?.name || "Espacio de Trabajo"}
-              onClick={() => setCollapsed(false)}
+              onClick={toggleCollapsed}
             >
               {activeWorkspace?.name ? activeWorkspace.name.substring(0, 2).toUpperCase() : "WS"}
             </div>
@@ -248,7 +297,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
+      <nav className="flex-1 overflow-y-auto px-2 sm:px-3 py-2 space-y-1 custom-scrollbar">
         {(() => {
           const isSuperAdmin = session?.user?.email === "superadmin@nexus.com" || (session?.user as any)?.role === "SUPER_ADMIN";
           const userWorkspaceRole = activeWorkspace?.role || (session?.user as any)?.role || "ADMIN";
@@ -267,14 +316,16 @@ export const Sidebar: React.FC = () => {
             <Link
               key={item.href}
               href={item.href}
+              title={collapsed ? item.title : undefined}
               className={cn(
-                "flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all group",
+                "flex items-center rounded-xl text-xs font-medium transition-all group relative",
+                collapsed ? "justify-center p-2.5" : "justify-between px-3 py-2.5",
                 isActive
                   ? "bg-indigo-600/90 text-white shadow-md shadow-indigo-600/30 font-semibold"
                   : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/60"
               )}
             >
-              <div className="flex items-center gap-3">
+              <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-3")}>
                 <Icon
                   className={cn(
                     "h-4 w-4 shrink-0 transition-colors",
@@ -289,6 +340,10 @@ export const Sidebar: React.FC = () => {
                   {item.href === "/notificaciones" ? unreadNotifCount : item.badge}
                 </span>
               )}
+
+              {collapsed && (item.href === "/notificaciones" ? unreadNotifCount > 0 : !!item.badge) && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0b0e1a]" />
+              )}
             </Link>
           );
         });
@@ -296,7 +351,7 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Bottom Profile & Toggle */}
-      <div className="p-3 border-t border-slate-800/60 space-y-3">
+      <div className="p-3 border-t border-slate-800/60 space-y-2">
         {/* Bottom User Profile */}
         {!collapsed ? (
           <div className="flex items-center gap-1.5">
@@ -316,7 +371,7 @@ export const Sidebar: React.FC = () => {
                   </p>
                   <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
                     <ShieldCheck className="h-3 w-3 text-indigo-400 shrink-0" />
-                    <span className="truncate">{currentUser.role === "SUPER_ADMIN" ? "Super Administrador" : "Administrador"}</span>
+                    <span className="truncate">{currentUser.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"}</span>
                   </div>
                 </div>
               </div>
@@ -330,21 +385,41 @@ export const Sidebar: React.FC = () => {
             </button>
           </div>
         ) : (
-          <button
-            onClick={handleSignOut}
-            title="Cerrar Sesión"
-            className="flex justify-center w-full p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={() => setIsProfileOpen(true)}
+              title={`${currentUser.name} (Perfil)`}
+              className="p-1 rounded-xl hover:bg-slate-800/60 transition-colors cursor-pointer"
+            >
+              <img
+                src={currentUser.avatarUrl}
+                alt={currentUser.name}
+                className="h-8 w-8 rounded-full object-cover ring-1 ring-indigo-500/40"
+              />
+            </button>
+            <button
+              onClick={handleSignOut}
+              title="Cerrar Sesión"
+              className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         )}
 
         <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-900 transition-colors"
-          title={collapsed ? "Expandir Sidebar" : "Colapsar Sidebar"}
+          onClick={toggleCollapsed}
+          className="w-full flex items-center justify-center gap-2 p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-900/80 border border-transparent hover:border-slate-800 transition-all cursor-pointer text-xs font-medium"
+          title={collapsed ? "Expandir menú lateral" : "Contraer menú lateral"}
         >
-          {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+          {collapsed ? (
+            <ChevronsRight className="h-4 w-4" />
+          ) : (
+            <>
+              <ChevronsLeft className="h-4 w-4" />
+              <span>Contraer menú</span>
+            </>
+          )}
         </button>
       </div>
       <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
