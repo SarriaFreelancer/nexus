@@ -162,10 +162,33 @@ export async function updateUserProfile(data: { name?: string; avatarUrl?: strin
   try {
     const { user } = await getCurrentWorkspace();
     const userId = (user as any).id;
-    const dbUser = await prisma.user.update({
-      where: { id: userId },
-      data
+    const userEmail = (user as any).email;
+    
+    // Find target user by ID or Email
+    const targetUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { id: userId },
+          ...(userEmail ? [{ email: userEmail }] : [])
+        ]
+      }
     });
+
+    if (!targetUser) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    const dbUser = await prisma.user.update({
+      where: { id: targetUser.id },
+      data: {
+        ...(data.name ? { name: data.name } : {}),
+        ...(data.avatarUrl !== undefined ? { avatarUrl: data.avatarUrl } : {})
+      }
+    });
+
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/", "layout");
+
     return { success: true, data: dbUser };
   } catch (error: any) {
     return { success: false, error: error.message };

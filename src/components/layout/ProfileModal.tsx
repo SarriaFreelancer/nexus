@@ -79,10 +79,16 @@ export function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     });
 
     if (res.success) {
-      await updateSession({ name: formData.name, picture: formData.avatarUrl });
+      await updateSession({ 
+        name: formData.name, 
+        picture: formData.avatarUrl,
+        image: formData.avatarUrl,
+        avatarUrl: formData.avatarUrl 
+      });
       setSuccessMsg("Perfil actualizado correctamente");
+      router.refresh();
     } else {
-      setSuccessMsg("Error al actualizar el perfil");
+      setSuccessMsg("Error al actualizar el perfil: " + (res.error || ""));
     }
     
     setLoading(false);
@@ -90,7 +96,7 @@ export function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     setTimeout(() => {
       onClose();
       setSuccessMsg("");
-    }, 1500);
+    }, 1200);
   };
 
   return (

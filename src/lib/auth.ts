@@ -183,12 +183,14 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
-        token.picture = (user as any).avatarUrl;
+        token.picture = (user as any).avatarUrl || (user as any).image;
         token.preferences = (user as any).preferences;
       }
       if (trigger === "update" && session) {
         if (session.name) token.name = session.name;
-        if (session.picture) token.picture = session.picture;
+        if (session.picture || session.image || session.avatarUrl) {
+          token.picture = session.picture || session.image || session.avatarUrl;
+        }
         if (session.preferences !== undefined) token.preferences = session.preferences;
       }
       return token;
@@ -199,7 +201,10 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
         (session.user as any).preferences = token.preferences || {};
         if (token.name) session.user.name = token.name;
-        if (token.picture) session.user.image = token.picture as string;
+        if (token.picture) {
+          session.user.image = token.picture as string;
+          (session.user as any).avatarUrl = token.picture as string;
+        }
       }
       return session;
     }
